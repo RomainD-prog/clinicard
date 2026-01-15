@@ -1,98 +1,159 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useRouter } from "expo-router";
+import React, { useEffect, useMemo, useState } from "react";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import * as repo from "../../src/storage/repo";
+import { useAppStore } from "../../src/store/useAppStore";
+import { Deck } from "../../src/types/models";
+import { computeDeckStats } from "../../src/utils/stats";
 
-export default function HomeScreen() {
+import { HeroStreakCard, StatTile } from "../../src/uiStitch/Cards";
+import { useStitchTheme } from "../../src/uiStitch/theme";
+import { TopBar } from "../../src/uiStitch/TopBar";
+
+function DeckRow({ deck, onOpen }: { deck: Deck; onOpen: () => void }) {
+  const t = useStitchTheme();
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <View style={[styles.deckRow, { backgroundColor: t.card, borderColor: t.border }]}>
+      <View style={{ flex: 1 }}>
+        <Text numberOfLines={1} style={{ color: t.text, fontFamily: t.font.display }}>
+          {deck.title}
+        </Text>
+        <Text style={{ marginTop: 6, color: t.muted, fontFamily: t.font.body }}>
+          {deck.cards.length} cartes • {deck.mcqs.length} QCM
+        </Text>
+      </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <Pressable
+        onPress={onOpen}
+        style={({ pressed }) => [
+          styles.openBtn,
+          { backgroundColor: t.primary, opacity: pressed ? 0.85 : 1 },
+        ]}
+      >
+        <Text style={{ color: "#fff", fontFamily: t.font.display }}>Ouvrir</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+export default function HomeTab() {
+  const router = useRouter();
+  const t = useStitchTheme();
+
+  const { decks, reviewStats, refreshReviewStats } = useAppStore();
+
+  const [totalDue, setTotalDue] = useState(0);
+
+  useEffect(() => {
+    (async () => {
+      await refreshReviewStats();
+
+      if (decks.length === 0) {
+        setTotalDue(0);
+        return;
+      }
+
+      const reviews = await repo.listReviews();
+      // calc “due” global simple via computeDeckStats (déjà chez toi)
+      const sum = decks.reduce((acc, d) => {
+        const s = computeDeckStats({ deck: d, reviews, quizAttempts: [] });
+        return acc + s.dueCards;
+      }, 0);
+
+      setTotalDue(sum);
+    })();
+  }, [decks, refreshReviewStats]);
+
+  const recent = useMemo(() => decks.slice(0, 3), [decks]);
+
+  const header = (
+    <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
+      <View style={{ marginTop: 10 }}>
+        <HeroStreakCard
+          streak={reviewStats.streak}
+          subtitle={`${totalDue} ${totalDue > 1 ? 'cartes à réviser' : 'carte à réviser'}`}
+        />
+      </View>
+
+      <View style={{ flexDirection: "row", gap: 12, marginTop: 12 }}>
+        <StatTile label="À réviser" value={`${totalDue}`} icon="school-outline" accent={t.primary} />
+        <StatTile label="Cours" value={`${decks.length}`} icon="library-outline" accent="#10b981" />
+      </View>
+
+      <View style={{ marginTop: 16 }}>
+        <Pressable
+          onPress={() => router.push("/import")}
+          style={({ pressed }) => [
+            styles.cta,
+            { backgroundColor: t.primary, opacity: pressed ? 0.9 : 1 },
+          ]}
+        >
+          <Text style={{ color: "#fff", fontFamily: t.font.display, fontSize: 16 }}>📥 Importer un cours</Text>
+        </Pressable>
+      </View>
+
+      <Text style={{ marginTop: 18, color: t.text, fontFamily: t.font.display, fontSize: 18 }}>
+        Derniers decks
+      </Text>
+
+      {decks.length === 0 ? (
+        <View style={[styles.empty, { backgroundColor: t.card, borderColor: t.border }]}>
+          <Text style={{ color: t.muted, fontFamily: t.font.body }}>
+            Aucun deck pour l'instant. Importe un PDF et on s'occupe du reste.
+          </Text>
+        </View>
+      ) : null}
+    </View>
+  );
+
+  return (
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <TopBar title="Accueil"
+        showBack={false}          // ✅ pas de retour sur un onglet
+        variant="large" />
+
+      <FlatList
+        data={recent}
+        keyExtractor={(d) => d.id}
+        ListHeaderComponent={header}
+        contentContainerStyle={{ paddingBottom: 30 }}
+        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        renderItem={({ item }) => (
+          <DeckRow deck={item} onOpen={() => router.push(`/deck/${item.id}`)} />
+        )}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  cta: {
+    height: 56,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  empty: {
+    marginTop: 10,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 14,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  deckRow: {
+    marginHorizontal: 16,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  openBtn: {
+    height: 44,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
