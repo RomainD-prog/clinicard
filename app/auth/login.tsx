@@ -1,212 +1,179 @@
-/**
- * Écran de Connexion
- * 
- * Permet à un utilisateur existant de se connecter avec email/password.
- * 
- * FONCTIONNEMENT :
- * - Formulaire simple avec email + password
- * - Validation basique (email valide, password non vide)
- * - Appelle authService.login() pour authentifier
- * - En cas de succès : redirige vers l'app principale
- * - En cas d'erreur : affiche un message d'erreur
- * 
- * IMPACT :
- * - L'utilisateur peut accéder à ses données depuis n'importe quel appareil
- * - La session est persistée localement (reste connecté)
- */
-
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
-import { CardShell } from "../../src/components/CardShell";
-import { PrimaryButton } from "../../src/components/PrimaryButton";
+
 import * as authService from "../../src/services/authService";
+import { syncUserData } from "../../src/services/cloudSync";
 import * as repo from "../../src/storage/repo";
 import { useAppStore } from "../../src/store/useAppStore";
+import { TopBar } from "../../src/uiStitch/TopBar";
+import { useStitchTheme } from "../../src/uiStitch/theme";
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { setAuthUser, syncUserData, refreshDecks, refreshReviewStats } = useAppStore();
-  
+  const t = useStitchTheme();
+  const { setAuthUser, setAuthChecked } = useAppStore();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert("Erreur", "Merci de remplir tous les champs");
-      return;
-    }
+  const canSubmit = useMemo(() => {
+    const e = email.trim();
+    return e.includes("@") && password.length >= 6;
+  }, [email, password]);
 
-    setLoading(true);
-    const { user, error } = await authService.login({ email: email.trim(), password });
-    setLoading(false);
+  async function onLogin() {
+    if (!canSubmit || loading) return;
 
-    if (error) {
-      Alert.alert("Erreur de connexion", error);
-      return;
-    }
+    try {
+      setLoading(true);
 
-    if (user) {
-      // ✅ Définir l'utilisateur authentifié comme utilisateur actuel
+      const { user, error } = await authService.login({
+        email: email.trim(),
+        password,
+      });
+
+      if (error || !user) {
+        Alert.alert("Connexion impossible", error ?? "Vérifie tes identifiants.");
+        return;
+      }
+
       await repo.setCurrentAuthUserId(user.id);
       setAuthUser(user);
-      
-      // ✅ Synchroniser et charger les données de cet utilisateur
+      setAuthChecked(true);
+
       await syncUserData(user.id);
-      await refreshDecks();
-      await refreshReviewStats();
-      
+
       router.replace("/(tabs)");
+    } catch (e: any) {
+      Alert.alert("Erreur", e?.message ?? "Impossible de se connecter.");
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleForgotPassword = async () => {
-    if (!email.trim()) {
-      Alert.alert("Email requis", "Entre ton email pour réinitialiser ton mot de passe");
-      return;
-    }
-
-    const { error } = await authService.resetPassword(email.trim());
-    if (error) {
-      Alert.alert("Erreur", error);
-    } else {
-      Alert.alert("Email envoyé", "Vérifie ta boîte mail pour réinitialiser ton mot de passe");
-    }
-  };
+  }
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
-      >
-        <View style={styles.header}>
-          <Text style={styles.title}>Connexion</Text>
-          <Text style={styles.subtitle}>Content de te revoir ! 👋</Text>
-        </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
+      <TopBar title="Connexion" variant="small" showBack onBack={() => router.back()} />
 
-        <CardShell title="">
-          <View style={styles.form}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="ton@email.com"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!loading}
-            />
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+          <View style={[styles.card, { backgroundColor: t.card, borderColor: t.border }]}>
+            <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+              <View style={[styles.heroIcon, { backgroundColor: "rgba(19,127,236,0.12)" }]}>
+                <Ionicons name="log-in-outline" size={20} color={t.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 16 }}>Bon retour 👋</Text>
+                <Text style={{ marginTop: 4, color: t.muted, fontFamily: t.font.body }}>
+                  Connecte-toi pour synchroniser tes decks et continuer ta progression.
+                </Text>
+              </View>
+            </View>
 
-            <Text style={styles.label}>Mot de passe</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="••••••••"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!loading}
-            />
+            <View style={{ height: 14 }} />
 
-            <TouchableOpacity onPress={handleForgotPassword} disabled={loading}>
-              <Text style={styles.forgotLink}>Mot de passe oublié ?</Text>
-            </TouchableOpacity>
+            <Text style={[styles.label, { color: t.muted, fontFamily: t.font.semibold }]}>EMAIL</Text>
+            <View style={[styles.inputWrap, { backgroundColor: t.dark ? "#161a20" : "#F8FAFC", borderColor: t.border }]}>
+              <Ionicons name="mail-outline" size={18} color={t.muted} />
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="toi@exemple.com"
+                placeholderTextColor={t.muted}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                style={{ flex: 1, color: t.text, fontFamily: t.font.body, fontSize: 15 }}
+              />
+            </View>
 
-            <View style={{ height: 16 }} />
+            <View style={{ height: 12 }} />
 
-            {loading ? (
-              <ActivityIndicator size="large" color="#4F46E5" />
-            ) : (
-              <>
-                <PrimaryButton title="Se connecter" onPress={handleLogin} />
-                <View style={{ height: 12 }} />
-                <TouchableOpacity onPress={() => router.push("/auth/signup")}>
-                  <Text style={styles.linkText}>
-                    Pas encore de compte ? <Text style={styles.linkBold}>S'inscrire</Text>
-                  </Text>
-                </TouchableOpacity>
-                <View style={{ height: 12 }} />
-                <TouchableOpacity onPress={() => router.back()}>
-                  <Text style={styles.linkText}>Retour</Text>
-                </TouchableOpacity>
-              </>
-            )}
+            <Text style={[styles.label, { color: t.muted, fontFamily: t.font.semibold }]}>MOT DE PASSE</Text>
+            <View style={[styles.inputWrap, { backgroundColor: t.dark ? "#161a20" : "#F8FAFC", borderColor: t.border }]}>
+              <Ionicons name="lock-closed-outline" size={18} color={t.muted} />
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                placeholder="••••••••"
+                placeholderTextColor={t.muted}
+                secureTextEntry
+                style={{ flex: 1, color: t.text, fontFamily: t.font.body, fontSize: 15 }}
+              />
+            </View>
+
+            <Pressable
+              onPress={onLogin}
+              disabled={!canSubmit || loading}
+              style={({ pressed }) => [
+                styles.cta,
+                { backgroundColor: t.primary, opacity: !canSubmit || loading ? 0.45 : pressed ? 0.9 : 1 },
+              ]}
+            >
+              <Text style={{ color: "#fff", fontFamily: t.font.display, fontSize: 16 }}>
+                {loading ? "Connexion…" : "Se connecter"}
+              </Text>
+              <Ionicons name="arrow-forward-outline" size={18} color="#fff" />
+            </Pressable>
           </View>
-        </CardShell>
+
+          <View style={{ marginTop: 14, alignItems: "center", gap: 6 }}>
+            <Text style={{ color: t.muted, fontFamily: t.font.body }}>Pas encore de compte ?</Text>
+            <Text onPress={() => router.replace("/auth/signup")} style={{ color: t.primary, fontFamily: t.font.semibold }}>
+              Créer un compte
+            </Text>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: "#F9FAFB",
-  },
-  container: {
-    flex: 1,
+  card: {
+    borderRadius: 22,
+    borderWidth: StyleSheet.hairlineWidth,
     padding: 16,
+    gap: 8,
   },
-  header: {
-    marginBottom: 24,
+  heroIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "900",
-    color: "#111827",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#6B7280",
-    marginTop: 4,
-  },
-  form: {
-    gap: 12,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-    marginBottom: -8,
-  },
-  input: {
-    backgroundColor: "#FFF",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 8,
+  label: { fontSize: 12, letterSpacing: 1, marginLeft: 2 },
+  inputWrap: {
+    marginTop: 8,
+    height: 52,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
-  forgotLink: {
-    color: "#4F46E5",
-    fontSize: 14,
-    textAlign: "right",
-    marginTop: -4,
-  },
-  linkText: {
-    color: "#6B7280",
-    fontSize: 14,
-    textAlign: "center",
-  },
-  linkBold: {
-    color: "#4F46E5",
-    fontWeight: "600",
+  cta: {
+    marginTop: 16,
+    height: 56,
+    borderRadius: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
   },
 });
-

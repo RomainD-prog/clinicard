@@ -14,7 +14,8 @@
       "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "MedFlash a besoin d'accéder à votre appareil photo pour scanner des documents.",
-        "NSPhotoLibraryUsageDescription": "MedFlash a besoin d'accéder à vos photos pour importer des documents."
+        "NSPhotoLibraryUsageDescription": "MedFlash a besoin d'accéder à vos photos pour importer des documents.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -59,7 +60,7 @@
     ],
     "experiments": {
       "typedRoutes": true,
-      "reactCompiler": true
+      "reactCompiler": false
     },
     "extra": {
       "router": {},
