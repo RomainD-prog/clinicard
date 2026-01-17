@@ -6,13 +6,14 @@ import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 
 import { useAppStore } from "../../src/store/useAppStore";
 import { useStitchTheme } from "../../src/uiStitch/theme";
@@ -204,7 +205,7 @@ export default function ImportScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: t.bg }}>
       {/* Top bar custom */}
       <View style={styles.topBar}>
         <Pressable onPress={goBackSmart} style={styles.iconBtn} hitSlop={10}>

@@ -4,19 +4,24 @@ import React, { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 
 import * as repo from "../../src/storage/repo";
 import { useAppStore } from "../../src/store/useAppStore";
 import { Deck } from "../../src/types/models";
 import { useStitchTheme } from "../../src/uiStitch/theme";
 import { computeDeckStats, pct } from "../../src/utils/stats";
+import { userInitials } from "../../src/utils/user";
+
+const { decks, authUser } = useAppStore();
+const initials = userInitials(authUser);
 
 type DeckRow = {
   deck: Deck;
@@ -226,7 +231,8 @@ export default function LibraryTab() {
   const bg = t.bg;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: bg }}>
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: bg }}>
+
       {/* Header */}
       <View style={[styles.header, { backgroundColor: bg, borderBottomColor: "transparent" }]}>
         <Text style={[styles.h1, { color: t.text, fontFamily: t.font.display }]}>Cours</Text>
@@ -240,7 +246,7 @@ export default function LibraryTab() {
         >
           <View style={[styles.avatarFill, { backgroundColor: t.dark ? "#283039" : "#EEF2FF" }]} />
           <Text style={{ position: "absolute", color: t.text, fontFamily: t.font.display, fontSize: 12 }}>
-            MF
+            {initials}
           </Text>
         </Pressable>
       </View>

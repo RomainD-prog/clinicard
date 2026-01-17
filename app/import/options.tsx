@@ -3,16 +3,15 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
-  Alert,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
-  View
+  View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 
 import * as api from "../../src/services/api";
 import { useAppStore } from "../../src/store/useAppStore";
@@ -196,7 +195,7 @@ export default function ImportOptionsScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={styles.topBar}>
         <Pressable onPress={goBackSmart} style={styles.iconBtn} hitSlop={10}>
           <Ionicons name="chevron-back" size={22} color={t.text} />

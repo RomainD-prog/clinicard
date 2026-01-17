@@ -16,27 +16,30 @@ async function getCloudSync() {
   return cloudSyncModule;
 }
 
+
 // ✅ Auto-sync après chaque modification si l'utilisateur est authentifié
 async function triggerAutoSync() {
   try {
-    const authUserId = await getJSON<string>(GLOBAL_KEYS.authUserId);
-    if (authUserId) {
-      const cloudSync = await getCloudSync();
-      // Fire and forget - ne bloque pas l'opération
-      cloudSync.autoSync(authUserId).catch((err: any) => 
-        console.warn("Auto-sync failed:", err)
-      );
+    const authUserId = await getJSON<string>(GLOBAL_KEYS.authUserId, null);
+    if (!isUuid(authUserId)) {
+      if (authUserId) await removeKey(GLOBAL_KEYS.authUserId);
+      return;
     }
+    const cloudSync = await getCloudSync();
+    cloudSync.autoSync(authUserId).catch((err: any) => console.warn("Auto-sync failed:", err));
   } catch (err) {
     console.warn("Auto-sync trigger failed:", err);
   }
 }
+
 
 // ✅ Clés globales (non isolées par utilisateur)
 const GLOBAL_KEYS = {
   authUserId: "mf:authUserId", // ID de l'utilisateur authentifié actuellement
   themeMode: "theme_mode",
   darkMode: "dark_mode",
+  localUserId: "mf:localUserId",
+
 };
 
 // ✅ Clés de données utilisateur (seront préfixées par userId)
@@ -60,33 +63,41 @@ const USER_DATA_KEYS = {
 // ✅ Obtenir l'ID utilisateur actuel (authUserId si connecté, sinon génère un userId local)
 let currentUserId: string | null = null;
 
-export async function getCurrentUserId(): Promise<string> {
+function isUuid(v: unknown): v is string {
+  if (typeof v !== "string") return false;
+  if (v === "undefined" || v === "null") return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+}
+
+
+export async function getCurrentUserId() {
   if (currentUserId) return currentUserId;
-  
-  // Vérifier si un utilisateur authentifié existe
-  const authUserId = await getJSON<string>(GLOBAL_KEYS.authUserId);
-  if (authUserId) {
+
+  const authUserId = await getJSON<string>(GLOBAL_KEYS.authUserId, null);
+  if (isUuid(authUserId)) {
     currentUserId = authUserId;
     return authUserId;
   }
-  
-  // Sinon, créer/récupérer un userId local
-  const localKey = "mf:localUserId";
-  const existing = await getJSON<string>(localKey);
-  if (existing) {
-    currentUserId = existing;
-    return existing;
+  if (authUserId) {
+    await removeKey(GLOBAL_KEYS.authUserId); // nettoie "undefined"
   }
-  
-  const id = uid("u_local_");
-  await setJSON(localKey, id);
-  currentUserId = id;
-  return id;
+
+  const localUserId = await getJSON<string>(GLOBAL_KEYS.localUserId, null);
+  if (localUserId) {
+    currentUserId = localUserId;
+    return localUserId;
+  }
+
+  const newId = `u_local_${nanoid()}`;
+  await setJSON(GLOBAL_KEYS.localUserId, newId);
+  currentUserId = newId;
+  return newId;
 }
+
 
 // ✅ Définir l'utilisateur authentifié actuel
 export async function setCurrentAuthUserId(userId: string | null): Promise<void> {
-  if (userId) {
+  if (isUuid(userId)) {
     await setJSON(GLOBAL_KEYS.authUserId, userId);
     currentUserId = userId;
   } else {
@@ -94,6 +105,7 @@ export async function setCurrentAuthUserId(userId: string | null): Promise<void>
     currentUserId = null;
   }
 }
+
 
 // ✅ Obtenir la clé préfixée pour l'utilisateur actuel
 async function getUserKey(key: string): Promise<string> {

@@ -43,6 +43,9 @@ export type CloudUserData = {
  * Upload les données locales vers Supabase
  */
 export async function syncToCloud(userId: string): Promise<{ success: boolean; error?: string }> {
+  if (!userId || userId === "undefined" || userId === "null") {
+    return { success: true };
+  }
   if (!CLOUD_SYNC_ENABLED) {
     return { success: false, error: "Cloud sync disabled" };
   }
@@ -95,6 +98,9 @@ export async function syncToCloud(userId: string): Promise<{ success: boolean; e
  * À utiliser uniquement au login ou pour forcer un refresh depuis le cloud
  */
 export async function syncFromCloud(userId: string, replaceLocal: boolean = false): Promise<{ success: boolean; error?: string }> {
+  if (!userId || userId === "undefined" || userId === "null") {
+    return { success: true };
+  }
   if (!CLOUD_SYNC_ENABLED) {
     return { success: false, error: "Cloud sync disabled" };
   }
@@ -136,6 +142,7 @@ export async function syncFromCloud(userId: string, replaceLocal: boolean = fals
  * Utilisé au login pour s'assurer que l'utilisateur voit ses données cloud
  */
 async function replaceLocalData(cloudData: CloudUserData) {
+  
   // Remplace tous les decks
   const localDecks = await repo.listDecks();
   const cloudDeckIds = new Set(cloudData.decks.map(d => d.id));
@@ -176,6 +183,7 @@ async function mergeDataToLocal(cloudData: CloudUserData) {
  * Stratégie : LOCAL → CLOUD (le local est la source de vérité)
  */
 export async function autoSync(userId: string | null): Promise<void> {
+  
   if (!userId || !CLOUD_SYNC_ENABLED) return;
 
   // Sync unidirectionnelle : upload les changements locaux vers le cloud
