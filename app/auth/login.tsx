@@ -15,7 +15,6 @@ import {
 } from "react-native";
 
 import * as authService from "../../src/services/authService";
-import { syncUserData } from "../../src/services/cloudSync";
 import * as repo from "../../src/storage/repo";
 import { useAppStore } from "../../src/store/useAppStore";
 import { TopBar } from "../../src/uiStitch/TopBar";
@@ -24,7 +23,7 @@ import { useStitchTheme } from "../../src/uiStitch/theme";
 export default function LoginScreen() {
   const router = useRouter();
   const t = useStitchTheme();
-  const { setAuthUser, setAuthChecked } = useAppStore();
+  const { setAuthUser, syncUserData } = useAppStore();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -53,8 +52,6 @@ export default function LoginScreen() {
 
       await repo.setCurrentAuthUserId(user.id);
       setAuthUser(user);
-      setAuthChecked(true);
-
       await syncUserData(user.id);
 
       router.replace("/(tabs)");

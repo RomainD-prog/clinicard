@@ -1,53 +1,32 @@
-/**
- * Client Supabase
- * 
- * Ce fichier initialise le client Supabase avec un stockage sécurisé des tokens.
- * Les tokens d'authentification sont stockés de manière chiffrée sur l'appareil.
- * 
- * FONCTIONNEMENT :
- * - Utilise expo-secure-store pour stocker les tokens de manière sécurisée
- * - Le client Supabase utilise ce storage pour persister la session
- * - Quand l'utilisateur ferme et rouvre l'app, la session est automatiquement restaurée
- */
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
-import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from "../config/supabase";
+import "react-native-url-polyfill/auto";
 
-// Storage sécurisé pour les tokens d'authentification
-// Sur iOS/Android : utilise le Keychain/Keystore natif
-// Sur Web : fallback sur localStorage
-const secureStorage = {
-  getItem: async (key: string) => {
-    if (Platform.OS === "web") {
-      return localStorage.getItem(key);
-    }
-    return await SecureStore.getItemAsync(key);
-  },
-  setItem: async (key: string, value: string) => {
-    if (Platform.OS === "web") {
-      localStorage.setItem(key, value);
-      return;
-    }
-    await SecureStore.setItemAsync(key, value);
-  },
-  removeItem: async (key: string) => {
-    if (Platform.OS === "web") {
-      localStorage.removeItem(key);
-      return;
-    }
-    await SecureStore.deleteItemAsync(key);
-  },
-};
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 
-// Client Supabase singleton
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    storage: secureStorage as any,
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: false, // Pas besoin pour mobile
-  },
-});
+const isWeb = Platform.OS === "web";
+const isSSR = isWeb && typeof window === "undefined";
 
+let _client: ReturnType<typeof createClient> | null = null;
+
+export function getSupabase() {
+  if (_client) return _client;
+
+  // Important: ne pas initialiser Supabase en SSR
+  if (isSSR) {
+    throw new Error("Supabase client cannot be created during SSR.");
+  }
+
+  _client = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      storage: AsyncStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: false,
+    },
+  });
+
+  return _client;
+}

@@ -190,7 +190,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   freeImportsRemaining: () => Math.max(0, FREE_IMPORTS_LIMIT - get().freeImportsUsed),
 
   // ✅ Auth & Sync
-  setAuthUser: (user) => set({ authUser: user }),
+  // Quand on définit un utilisateur authentifié, on aligne aussi userId
+  // (il sert d'identifiant global dans l'app : RevenueCat, cloud sync, etc.).
+  setAuthUser: (user) =>
+    set((s) => ({
+      authUser: user,
+      userId: user ? user.id : s.userId,
+    })),
 
   logout: async () => {
     const currentUser = get().authUser;
@@ -229,17 +235,23 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   checkAuthStatus: async () => {
     // Vérifie si un utilisateur est déjà connecté au démarrage
-    const user = await authService.getCurrentUser();
-    if (user) {
-      // ✅ Définir l'utilisateur authentifié comme utilisateur actuel
-      await repo.setCurrentAuthUserId(user.id);
-      set({ authUser: user, userId: user.id });
-      
-      // ✅ Charger les données de cet utilisateur depuis le cloud
-      await cloudSync.syncFromCloud(user.id, true);
-      await get().refreshDecks();
-      await get().refreshReviewStats();
+    const { user, error } = await authService.getCurrentUser();
+
+    if (error) {
+      console.warn("[Store] getCurrentUser failed:", error);
+      return;
     }
+
+    if (!user) return;
+
+    // ✅ Définir l'utilisateur authentifié comme utilisateur actuel
+    await repo.setCurrentAuthUserId(user.id);
+    set({ authUser: user, userId: user.id });
+
+    // ✅ Charger les données de cet utilisateur depuis le cloud
+    await cloudSync.syncFromCloud(user.id, true);
+    await get().refreshDecks();
+    await get().refreshReviewStats();
   },
 
   refreshSubscriptionStatus: async () => {
