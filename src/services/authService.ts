@@ -117,12 +117,38 @@ export async function logout(): Promise<{ error: string | null }> {
 /**
  * Récupère l'utilisateur connecté actuellement
  */
+
+/**
+ * Récupère l'utilisateur connecté actuellement
+ */
 export async function getCurrentUser(): Promise<{ user: AuthUser | null; error: string | null }> {
   try {
-    const { data, error } = await supabase.auth.getUser();
-    if (error) throw error;
+    // 1) Vérifie s'il y a une session (sinon ne pas appeler getUser)
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
 
-    if (!data.user) return { user: null, error: null };
+    if (sessionError) {
+      console.error("Erreur getSession:", sessionError);
+      return { user: null, error: "Impossible de récupérer la session" };
+    }
+
+    const session = sessionData?.session;
+    if (!session) {
+      // pas connecté
+      return { user: null, error: null };
+    }
+
+    // 2) Maintenant seulement on peut récupérer le user
+    const { data, error } = await supabase.auth.getUser();
+
+    if (error) {
+      // Ne pas throw : on renvoie une erreur propre
+      console.error("Erreur getUser:", error);
+      return { user: null, error: "Impossible de récupérer l'utilisateur" };
+    }
+
+    if (!data.user) {
+      return { user: null, error: null };
+    }
 
     return { user: mapUser(data.user), error: null };
   } catch (err) {

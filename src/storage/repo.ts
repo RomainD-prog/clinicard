@@ -1,5 +1,4 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { nanoid } from "nanoid";
 import { FREE_IMPORTS_LIMIT } from "../config/env";
 import type { ThemeMode } from "../store/useAppStore";
 import { Deck, GenerationJob, QuizAttempt, ReviewRecord, StudyLevel } from "../types/models";
@@ -88,7 +87,7 @@ export async function getCurrentUserId() {
     return localUserId;
   }
 
-  const newId = `u_local_${nanoid()}`;
+  const newId = uid("u_local_");
   await setJSON(GLOBAL_KEYS.localUserId, newId);
   currentUserId = newId;
   return newId;
@@ -167,7 +166,7 @@ export async function addDeckCard(
   const deck = await getDeck(deckId);
   if (!deck) throw new Error("Deck introuvable");
 
-  const newCard = { id: nanoid(), ...card };
+  const newCard = { id: uid("card_"), ...card };
   deck.cards = [newCard, ...deck.cards];
 
   await saveDeck(deck); // ✅ persist (saveDeck fait déjà l'auto-sync)

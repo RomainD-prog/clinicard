@@ -1,0 +1,170 @@
+[
+  {
+    "jobId": "Y6hCjEKDm2UhQXySg-mgZ",
+    "status": "done",
+    "stage": "done",
+    "progress": 1,
+    "createdAt": 1767992882926,
+    "updatedAt": 1768001649940,
+    "level": "PASS",
+    "requestedCards": 40,
+    "requestedMcq": 20,
+    "planDays": 7,
+    "medicalStyle": true,
+    "language": "fr",
+    "autoCounts": true,
+    "intensity": "standard",
+    "estWords": 5728,
+    "estPages": 13.6,
+    "finalCards": 40,
+    "finalMcq": 20,
+    "deckId": "6ZO_1GbS-VOJJvXNfcmU8"
+  },
+  {
+    "jobId": "J0QF1XsLAr_SJ0gTjGAri",
+    "status": "done",
+    "stage": "done",
+    "progress": 1,
+    "createdAt": 1767976636173,
+    "updatedAt": 1767976711556,
+    "level": "PASS",
+    "requestedCards": 35,
+    "requestedMcq": 10,
+    "planDays": 7,
+    "medicalStyle": true,
+    "language": "fr",
+    "autoCounts": false,
+    "intensity": "standard",
+    "finalCards": 35,
+    "finalMcq": 10,
+    "deckId": "vnbgl3as3SqXMfOo0UPyj"
+  },
+  {
+    "jobId": "9WeONYarumehW_MiAwc1Q",
+    "status": "done",
+    "stage": "done",
+    "progress": 1,
+    "createdAt": 1767969945232,
+    "updatedAt": 1767969993848,
+    "level": "EDN_ECOS",
+    "requestedCards": 40,
+    "requestedMcq": 10,
+    "planDays": 7,
+    "medicalStyle": true,
+    "language": "fr",
+    "autoCounts": false,
+    "intensity": "standard",
+    "finalCards": 40,
+    "finalMcq": 10,
+    "deckId": "iqzC3y-7hpznkb7BQmfMJ"
+  },
+  {
+    "jobId": "eGcMxTm91kPb90gtBmLXu",
+    "status": "error",
+    "stage": "generate",
+    "progress": 1,
+    "createdAt": 1767968784569,
+    "updatedAt": 1767968784737,
+    "error": "Cannot access 'finalCards' before initialization"
+  },
+  {
+    "jobId": "chlRs-_ppbxEpP5D7teks",
+    "status": "done",
+    "stage": "done",
+    "progress": 1,
+    "createdAt": 1767905744291,
+    "updatedAt": 1767905796508,
+    "deckId": "ItZgkHMqTUrmn8N2FtXPg"
+  },
+  {
+    "jobId": "KMK-qEzSvN73pZ6um1uwg",
+    "status": "done",
+    "stage": "done",
+    "progress": 1,
+    "createdAt": 1767904004108,
+    "updatedAt": 1767904032741,
+    "deckId": "ouMpW5fByEEbTjN9bd-3D"
+  },
+  {
+    "jobId": "2Jc_daSisrBia6d44aDLh",
+    "status": "done",
+    "stage": "done",
+    "progress": 1,
+    "createdAt": 1767819587453,
+    "updatedAt": 1767819606384,
+    "deckId": "kzlFO-JBsFaEoYAvu2STw"
+  },
+  {
+    "jobId": "rkG_dTFFZlKZ8-tUYz-st",
+    "status": "error",
+    "stage": "generate",
+    "progress": 1,
+    "createdAt": 1767817787512,
+    "updatedAt": 1767817825239,
+    "error": "[\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"string\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"title\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"cards\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"mcqs\"\n    ],\n    \"message\": \"Required\"\n  },\n  {\n    \"code\": \"invalid_type\",\n    \"expected\": \"array\",\n    \"received\": \"undefined\",\n    \"path\": [\n      \"plan7d\"\n    ],\n    \"message\": \"Required\"\n  }\n]"
+  },
+  {
+    "jobId": "IZ0jX1E5PfeTncMgclZqw",
+    "status": "processing",
+    "stage": "generate",
+    "progress": 0.35,
+    "createdAt": 1767800878750,
+    "updatedAt": 1767800878994
+  },
+  {
+    "jobId": "tv0SePQpjD6_PzjufjpsW",
+    "status": "error",
+    "createdAt": 1767709950852,
+    "updatedAt": 1767709969939,
+    "error": "429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors."
+  },
+  {
+    "jobId": "R3cvzq7D2nh7xQFRkG-H0",
+    "status": "error",
+    "createdAt": 1767651999139,
+    "updatedAt": 1767652018055,
+    "error": "429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors."
+  },
+  {
+    "jobId": "6E71OQSSkXHMvB0Vjphmj",
+    "status": "error",
+    "createdAt": 1767651742348,
+    "updatedAt": 1767651742702,
+    "error": "401 Incorrect API key provided: sk-xxxx. You can find your API key at https://platform.openai.com/account/api-keys."
+  },
+  {
+    "jobId": "bLEoS2oJo3H7pyhPeOQMw",
+    "status": "error",
+    "createdAt": 1767651663396,
+    "updatedAt": 1767651663778,
+    "error": "401 Incorrect API key provided: sk-xxxx. You can find your API key at https://platform.openai.com/account/api-keys."
+  },
+  {
+    "jobId": "qioOH_6VRxvRn9GhcOPbF",
+    "status": "error",
+    "createdAt": 1767651643085,
+    "updatedAt": 1767651643458,
+    "error": "401 Incorrect API key provided: sk-xxxx. You can find your API key at https://platform.openai.com/account/api-keys."
+  },
+  {
+    "jobId": "EowKCxczQ_D5VdlDoSDqw",
+    "status": "error",
+    "createdAt": 1767651507900,
+    "updatedAt": 1767651508269,
+    "error": "401 Incorrect API key provided: sk-xxxx. You can find your API key at https://platform.openai.com/account/api-keys."
+  },
+  {
+    "jobId": "MupTCFw9T3sMio8IabwpH",
+    "status": "error",
+    "createdAt": 1767651494364,
+    "updatedAt": 1767651494783,
+    "error": "401 Incorrect API key provided: sk-xxxx. You can find your API key at https://platform.openai.com/account/api-keys."
+  },
+  {
+    "jobId": "AgV668FThXfOXbZgfkSgd",
+    "status": "error",
+    "createdAt": 1767651159562,
+    "updatedAt": 1767651160057,
+    "error": "401 Incorrect API key provided: sk-xxxx. You can find your API key at https://platform.openai.com/account/api-keys."
+  }
+]
