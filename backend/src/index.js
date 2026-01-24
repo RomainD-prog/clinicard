@@ -10,7 +10,7 @@ import helmet from "helmet";
 
 import { backupDatabase } from "./backup.js";
 import { extractTextFromUpload } from "./extract.js";
-import { generateDeckFromText } from "./generate.js";
+import { analyzeExamBlueprint, generateDeckFromText } from "./generate.js";
 import { createJob, getDeck, getJob, initStore, saveDeck, updateJob } from "./storeSQLite.js";
 
 const app = express();
@@ -84,125 +84,192 @@ function estimateCountsFromText(text, intensity = "standard") {
 
 app.get("/health", (_, res) => res.json({ ok: true, uptime: process.uptime() }));
 
-app.post("/v1/jobs", upload.single("file"), async (req, res) => {
-  try {
-    console.log("[POST /v1/jobs] Nouvelle génération reçue");
-    if (!req.file?.buffer) return res.status(400).json({ error: "file manquant" });
+app.post(
+  "/v1/jobs",
+  upload.fields([
+    { name: "file", maxCount: 1 },
+    { name: "exam", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      console.log("[POST /v1/jobs] Nouvelle génération reçue");
 
-    let opts = null;
-    if (req.body?.opts) {
-      try {
-        opts = typeof req.body.opts === "string" ? JSON.parse(req.body.opts) : req.body.opts;
-      } catch {
-        opts = null;
-      }
-    }
+      const courseUpload = req.files?.file?.[0];
+      const examUpload = req.files?.exam?.[0];
 
-    const level = opts?.level ?? req.body.level ?? "PASS";
-    const requestedCards = clampInt(opts?.flashcardsCount ?? req.body.cardsCount ?? req.body.flashcardsCount ?? 20, 5, 500, 20);
-    const requestedMcq = clampInt(opts?.mcqCount ?? req.body.mcqCount ?? 10, 0, 500, 10);
-    const planDays = clampInt(opts?.planDays ?? req.body.planDays ?? 7, 0, 14, 7);
-    const medicalStyle = parseBool(opts?.medicalStyle ?? req.body.medicalStyle, true);
-    const language = opts?.language ?? req.body.language ?? "fr";
+      if (!courseUpload?.buffer) return res.status(400).json({ error: "file manquant" });
 
-    // ✅ Toujours en mode auto maintenant
-    const autoCounts = true;
-    const intensity = opts?.intensity ?? req.body.intensity ?? "standard";
-
-    const jobId = nanoid();
-    console.log(`[Job ${jobId}] Créé - level=${level}, intensity=${intensity}`);
-
-    await createJob({
-      jobId,
-      status: "processing",
-      stage: "queued",
-      progress: 0.02,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      level,
-      requestedCards,
-      requestedMcq,
-      planDays,
-      medicalStyle,
-      language,
-      autoCounts,
-      intensity,
-    });
-
-    res.json({ jobId, status: "processing" });
-
-    setImmediate(async () => {
-      let stage = "extract";
-      let finalCards = requestedCards;
-      let finalMcq = requestedMcq;
-
-      try {
-        console.log(`[Job ${jobId}] Stage: extract`);
-        await updateJob(jobId, { status: "processing", stage, progress: 0.1 });
-
-        const text = await extractTextFromUpload({
-          buffer: req.file.buffer,
-          mimeType: req.file.mimetype,
-        });
-
-        console.log(`[Job ${jobId}] Texte extrait: ${text.length} caractères`);
-
-        if (!text || text.length < 500) {
-          throw new Error("Texte insuffisant extrait du PDF. Si c'est un scan, OCR nécessaire (MVP).");
+      let opts = null;
+      if (req.body?.opts) {
+        try {
+          opts = typeof req.body.opts === "string" ? JSON.parse(req.body.opts) : req.body.opts;
+        } catch {
+          opts = null;
         }
+      }
 
-        if (autoCounts) {
-          stage = "estimate";
-          await updateJob(jobId, { stage, progress: 0.22 });
+      const level = opts?.level ?? req.body.level ?? "PASS";
+      const subject = (opts?.subject ?? req.body.subject) || undefined;
 
-          const est = estimateCountsFromText(text, intensity);
-          // ✅ L'IA décide librement selon le contenu, pas de limite artificielle
-          finalCards = est.cards;
-          finalMcq = est.mcqs;
+      const requestedCards = clampInt(
+        opts?.flashcardsCount ?? req.body.cardsCount ?? req.body.flashcardsCount ?? 20,
+        5,
+        500,
+        20
+      );
+      const requestedMcq = clampInt(opts?.mcqCount ?? req.body.mcqCount ?? 10, 0, 500, 10);
+      const planDays = clampInt(opts?.planDays ?? req.body.planDays ?? 7, 0, 14, 7);
+      const medicalStyle = parseBool(opts?.medicalStyle ?? req.body.medicalStyle, true);
+      const language = opts?.language ?? req.body.language ?? "fr";
 
-          console.log(`[Job ${jobId}] Estimation: ${finalCards} cards, ${finalMcq} QCM (${est.pages} pages)`);
+      // ✅ Toujours en mode auto maintenant
+      const autoCounts = true;
+      const intensity = opts?.intensity ?? req.body.intensity ?? "standard";
 
+      // ✅ Mode concours (annales)
+      const examGuided = parseBool(opts?.examGuided ?? req.body.examGuided, false);
+      const examInfluenceRaw = (opts?.examInfluence ?? req.body.examInfluence ?? "medium").toString();
+      const examInfluence = ["low", "medium", "high"].includes(examInfluenceRaw) ? examInfluenceRaw : "medium";
+      const useExam = Boolean(examGuided && examUpload?.buffer);
+
+      const jobId = nanoid();
+      console.log(
+        `[Job ${jobId}] Créé - level=${level}, intensity=${intensity}, subject=${subject ?? "-"}, exam=${useExam ? "on" : "off"}`
+      );
+
+      await createJob({
+        jobId,
+        status: "processing",
+        stage: "queued",
+        progress: 0.02,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        level,
+        requestedCards,
+        requestedMcq,
+        planDays,
+        medicalStyle,
+        language,
+        autoCounts,
+        intensity,
+      });
+
+      res.json({ jobId, status: "processing" });
+
+      setImmediate(async () => {
+        let stage = "extract";
+        let finalCards = requestedCards;
+        let finalMcq = requestedMcq;
+
+        try {
+          console.log(`[Job ${jobId}] Stage: extract`);
+          await updateJob(jobId, { status: "processing", stage, progress: 0.1 });
+
+          const text = await extractTextFromUpload({
+            buffer: courseUpload.buffer,
+            mimeType: courseUpload.mimetype,
+          });
+
+          console.log(`[Job ${jobId}] Texte extrait: ${text.length} caractères`);
+
+          if (!text || text.length < 500) {
+            throw new Error("Texte insuffisant extrait du PDF. Si c'est un scan, OCR nécessaire (MVP).");
+          }
+
+          // --- Optionnel: annale de concours
+          let examBlueprint = null;
+          if (useExam) {
+            stage = "extract_exam";
+            await updateJob(jobId, { stage, progress: 0.14 });
+
+            const examText = await extractTextFromUpload({
+              buffer: examUpload.buffer,
+              mimeType: examUpload.mimetype,
+            });
+
+            if (examText && examText.length >= 300) {
+              stage = "analyze_exam";
+              await updateJob(jobId, { stage, progress: 0.20 });
+
+              examBlueprint = await analyzeExamBlueprint({
+                text: examText,
+                level,
+                language,
+              });
+
+              await updateJob(jobId, { stage, progress: 0.24 });
+              console.log(`[Job ${jobId}] Annale analysée (blueprint prêt)`);
+            } else {
+              console.log(`[Job ${jobId}] Annale ignorée (texte insuffisant)`);
+            }
+          }
+
+          if (autoCounts) {
+            stage = "estimate";
+            await updateJob(jobId, { stage, progress: useExam ? 0.28 : 0.22 });
+
+            const est = estimateCountsFromText(text, intensity);
+            // ✅ L'IA décide librement selon le contenu, pas de limite artificielle
+            finalCards = est.cards;
+            finalMcq = est.mcqs;
+
+            console.log(
+              `[Job ${jobId}] Estimation: ${finalCards} cards, ${finalMcq} QCM (${est.pages} pages)`
+            );
+
+            await updateJob(jobId, {
+              stage,
+              progress: useExam ? 0.34 : 0.28,
+              estWords: est.words,
+              estPages: est.pages,
+              finalCards,
+              finalMcq,
+            });
+          }
+
+          stage = "generate";
+          await updateJob(jobId, { stage, progress: 0.40, finalCards, finalMcq });
+          console.log(`[Job ${jobId}] Génération IA démarrée...`);
+
+          const deck = await generateDeckFromText({
+            text,
+            level,
+            subject,
+            cardsCount: finalCards,
+            mcqCount: finalMcq,
+            planDays,
+            medicalStyle,
+            language,
+            examBlueprint,
+            examInfluence,
+            sourceFilename: courseUpload.originalname,
+          });
+
+          stage = "save";
+          await updateJob(jobId, { stage, progress: 0.9 });
+          console.log(`[Job ${jobId}] Génération terminée, sauvegarde...`);
+
+          await saveDeck(deck);
           await updateJob(jobId, {
-            stage,
-            progress: 0.28,
-            estWords: est.words,
-            estPages: est.pages,
+            status: "done",
+            stage: "done",
+            progress: 1,
+            deckId: deck.id,
             finalCards,
             finalMcq,
           });
+          console.log(`[Job ${jobId}] ✅ Terminé ! DeckId=${deck.id}`);
+        } catch (e) {
+          console.error("[job error]", `jobId=${jobId}`, `stage=${stage}`, safeErr(e));
+          await updateJob(jobId, { status: "error", stage, progress: 1, error: e?.message ?? "unknown_error" });
         }
-
-        stage = "generate";
-        await updateJob(jobId, { stage, progress: 0.35, finalCards, finalMcq });
-        console.log(`[Job ${jobId}] Génération IA démarrée...`);
-
-        const deck = await generateDeckFromText({
-          text,
-          level,
-          cardsCount: finalCards,
-          mcqCount: finalMcq,
-          planDays,
-          medicalStyle,
-          language,
-        });
-
-        stage = "save";
-        await updateJob(jobId, { stage, progress: 0.9 });
-        console.log(`[Job ${jobId}] Génération terminée, sauvegarde...`);
-
-        await saveDeck(deck);
-        await updateJob(jobId, { status: "done", stage: "done", progress: 1, deckId: deck.id, finalCards, finalMcq });
-        console.log(`[Job ${jobId}] ✅ Terminé ! DeckId=${deck.id}`);
-      } catch (e) {
-        console.error("[job error]", `jobId=${jobId}`, `stage=${stage}`, safeErr(e));
-        await updateJob(jobId, { status: "error", stage, progress: 1, error: e?.message ?? "unknown_error" });
-      }
-    });
-  } catch (e) {
-    console.error("[POST /v1/jobs error]", safeErr(e));
-    res.status(500).json({ error: e?.message ?? "server_error" });
+      });
+    } catch (e) {
+      console.error("[POST /v1/jobs error]", safeErr(e));
+      res.status(500).json({ error: e?.message ?? "server_error" });
+    }
   }
-});
+);
 
 app.get("/v1/jobs/:jobId", (req, res) => {
   const job = getJob(req.params.jobId);

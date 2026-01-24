@@ -1,76 +1,41 @@
-import { Lexend_300Light, Lexend_400Regular, Lexend_500Medium, Lexend_600SemiBold, Lexend_700Bold, useFonts } from "@expo-google-fonts/lexend";
-import { Stack } from "expo-router";
-import { useEffect } from "react";
-import { View } from "react-native";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import "react-native-gesture-handler";
 
-import { LoadingBlock } from "../src/components/LoadingBlock";
-import { initPurchases } from "../src/services/purchases";
+import { Slot } from "expo-router";
+import { useEffect } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+
 import { useAppStore } from "../src/store/useAppStore";
 
+/**
+ * Root layout required by expo-router.
+ *
+ * The app bootstrap (loading persisted settings, decks, etc.) is triggered here.
+ * If this file is missing, `isReady` will never become true and the app will
+ * remain on the "Chargement..." screen.
+ */
 export default function RootLayout() {
-  const { isReady, bootstrap, userId, refreshSubscriptionStatus } = useAppStore();
+  const bootstrap = useAppStore((s: any) => s.bootstrap);
 
-  const [fontsLoaded] = useFonts({
-    Lexend_300Light,
-    Lexend_400Regular,
-    Lexend_500Medium,
-    Lexend_600SemiBold,
-    Lexend_700Bold,
-  });
-
-  // Bootstrap de l'app (auth, storage, etc.)
   useEffect(() => {
-    void bootstrap();
-  }, [bootstrap]);
-
-  // RevenueCat : seulement quand le userId est connu
-  useEffect(() => {
-    if (!isReady || !userId) return;
+    let alive = true;
 
     (async () => {
-      await initPurchases(userId);
-      await refreshSubscriptionStatus();
-    })().catch((e) => {
-      // Ne bloque pas le rendu/navigation en cas d'erreur RevenueCat
-      console.warn("[purchases] init failed", e);
-    });
-  }, [isReady, userId, refreshSubscriptionStatus]);
+      try {
+        await bootstrap();
+      } catch (e) {
+        console.warn("[RootLayout] bootstrap failed:", e);
+        if (alive) useAppStore.setState({ isReady: true } as any);
+      }
+    })();
 
-  const showLoading = !isReady || !fontsLoaded;
+    return () => {
+      alive = false;
+    };
+  }, [bootstrap]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        {/* IMPORTANT: Toujours monter le navigator au 1er render (évite les erreurs de Hooks dans expo-router) */}
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            headerTitleStyle: { fontFamily: "Lexend_700Bold" },
-            headerBackTitle: "Retour",
-          }}
-        />
-
-        {showLoading ? (
-          <View
-            pointerEvents="auto"
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              padding: 20,
-              paddingTop: 40,
-              justifyContent: "flex-start",
-              backgroundColor: "white",
-            }}
-          >
-            <LoadingBlock label="Initialisation…" />
-          </View>
-        ) : null}
-      </SafeAreaProvider>
+      <Slot />
     </GestureHandlerRootView>
   );
 }

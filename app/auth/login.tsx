@@ -113,6 +113,15 @@ export default function LoginScreen() {
             </View>
 
             <Pressable
+              onPress={() => router.push("/auth/forgot")}
+              style={({ pressed }) => [{ alignSelf: "flex-end", marginTop: 10, opacity: pressed ? 0.7 : 1 }]}
+            >
+              <Text style={{ color: t.primary, fontFamily: t.font.semibold, fontSize: 13 }}>
+                Mot de passe oublié ?
+              </Text>
+            </Pressable>
+
+            <Pressable
               onPress={onLogin}
               disabled={!canSubmit || loading}
               style={({ pressed }) => [

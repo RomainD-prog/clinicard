@@ -29,11 +29,13 @@ type AppState = {
 
   decks: Deck[];
   selectedFile: PickedFile | null;
+  selectedExamFile: PickedFile | null;
   onboardingDone: boolean;
 
   bootstrap: () => Promise<void>;
   setLevel: (lvl: StudyLevel) => Promise<void>;
   setSelectedFile: (f: PickedFile | null) => void;
+  setSelectedExamFile: (f: PickedFile | null) => void;
 
   refreshDecks: () => Promise<void>;
   incFreeImportUsed: () => Promise<void>;
@@ -77,6 +79,7 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   decks: [],
   selectedFile: null,
+  selectedExamFile: null,
   reminder: { enabled: false, hour: 19, minute: 0, notifId: null },
   onboardingDone: false,
 
@@ -132,6 +135,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   setSelectedFile: (f) => set({ selectedFile: f }),
+
+  setSelectedExamFile: (f) => set({ selectedExamFile: f }),
 
   refreshDecks: async () => {
     const decks = await repo.listDecks();

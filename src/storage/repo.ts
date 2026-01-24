@@ -17,17 +17,35 @@ async function getCloudSync() {
 
 
 // ✅ Auto-sync après chaque modification si l'utilisateur est authentifié
+// Protection contre les appels répétés
+let lastAutoSyncTime = 0;
+const AUTO_SYNC_THROTTLE_MS = 2000; // 2 secondes minimum entre les syncs
+
 async function triggerAutoSync() {
   try {
+    // ✅ Throttle : éviter les appels trop fréquents
+    const now = Date.now();
+    if (now - lastAutoSyncTime < AUTO_SYNC_THROTTLE_MS) {
+      return; // Trop tôt, ignorer
+    }
+    lastAutoSyncTime = now;
+
     const authUserId = await getJSON<string>(GLOBAL_KEYS.authUserId, null);
     if (!isUuid(authUserId)) {
       if (authUserId) await removeKey(GLOBAL_KEYS.authUserId);
       return;
     }
+    
     const cloudSync = await getCloudSync();
-    cloudSync.autoSync(authUserId).catch((err: any) => console.warn("Auto-sync failed:", err));
+    // Fire and forget, ne pas logger les erreurs "Not authenticated"
+    cloudSync.autoSync(authUserId).catch((err: any) => {
+      // Ne logger que les vraies erreurs, pas "Not authenticated"
+      if (err?.message && !err.message.includes("Not authenticated")) {
+        console.warn("Auto-sync failed:", err.message);
+      }
+    });
   } catch (err) {
-    console.warn("Auto-sync trigger failed:", err);
+    // Ignorer silencieusement les erreurs de trigger
   }
 }
 

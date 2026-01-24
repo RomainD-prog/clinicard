@@ -10,12 +10,6 @@ import { computeDeckStats } from "../../src/utils/stats";
 import { HeroStreakCard, StatTile } from "../../src/uiStitch/Cards";
 import { useStitchTheme } from "../../src/uiStitch/theme";
 import { TopBar } from "../../src/uiStitch/TopBar";
-import { userInitials } from "../../src/utils/user";
-
-const { authUser } = useAppStore();
-const initials = userInitials(authUser);
-
-
 
 function DeckRow({ deck, onOpen }: { deck: Deck; onOpen: () => void }) {
   const t = useStitchTheme();
@@ -119,7 +113,7 @@ export default function HomeTab() {
         title="Accueil"
         showBack={false}
         variant="large"
-        rightLabel={initials}
+        rightIcon="person-outline"
         onPressRight={() => router.push("/(tabs)/settings")}
       />
 

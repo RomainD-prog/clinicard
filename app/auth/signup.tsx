@@ -69,6 +69,35 @@ export default function SignupScreen() {
     }
   }
 
+
+  async function onGoogle() {
+    if (loading) return;
+
+    try {
+      setLoading(true);
+
+      const { user, error } = await authService.signInWithGoogle();
+
+      if (error) {
+        Alert.alert("Connexion Google impossible", error);
+        return;
+      }
+
+      // Web: full redirect (no user returned here). Native: user returned after exchange.
+      if (!user) return;
+
+      await repo.setCurrentAuthUserId(user.id);
+      setAuthUser(user);
+      await syncUserData(user.id);
+
+      router.replace("/(tabs)");
+    } catch (e: any) {
+      Alert.alert("Erreur", e?.message ?? "Impossible de se connecter avec Google.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
       <TopBar title="Créer un compte" variant="small" showBack onBack={() => router.back()} />
@@ -160,6 +189,30 @@ export default function SignupScreen() {
               </Text>
               <Ionicons name="arrow-forward-outline" size={18} color="#fff" />
             </Pressable>
+
+            <View style={styles.orRow}>
+              <View style={[styles.orLine, { backgroundColor: t.border }]} />
+              <Text style={{ color: t.muted, fontFamily: t.font.medium, fontSize: 12 }}>OU</Text>
+              <View style={[styles.orLine, { backgroundColor: t.border }]} />
+            </View>
+
+            <Pressable
+              onPress={onGoogle}
+              disabled={loading}
+              style={({ pressed }) => [
+                styles.oauthBtn,
+                {
+                  borderColor: t.border,
+                  backgroundColor: t.card,
+                  opacity: loading ? 0.6 : pressed ? 0.9 : 1,
+                },
+              ]}
+            >
+              <Ionicons name="logo-google" size={18} color={t.text} />
+              <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 15 }}>
+                Continuer avec Google
+              </Text>
+            </Pressable>
           </View>
 
           <View style={{ marginTop: 14, alignItems: "center", gap: 6 }}>
@@ -199,6 +252,24 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
+  orRow: {
+    marginTop: 14,
+    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  orLine: { flex: 1, height: StyleSheet.hairlineWidth },
+  oauthBtn: {
+    height: 52,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+  },
+
   cta: {
     marginTop: 16,
     height: 56,

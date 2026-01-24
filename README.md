@@ -1,50 +1,30 @@
-# Welcome to your Expo app 👋
+# Patch: Annale (mode concours) pour améliorer la génération (flashcards + QCM)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Ce patch ajoute la possibilité de joindre une **annale de concours (PDF, optionnelle)** lors de l'import d'un cours.
 
-## Get started
+## Ce que ça fait
+- **UI Import**: bouton pour sélectionner une annale PDF (optionnel) + possibilité de la retirer.
+- **Options de génération**: switch "Activer le mode concours" (uniquement si une annale est sélectionnée) + niveau d'influence (faible/moyen/fort).
+- **Backend**:
+  - accepte un second fichier multipart `exam` (en plus de `file`).
+  - extrait le texte de l'annale et produit un **blueprint abstrait** (sans verbatim) via OpenAI.
+  - utilise ce blueprint pour guider le **style** des flashcards/QCM (formats, pièges, difficulté) tout en gardant le **contenu factuel** strictement issu du cours.
 
-1. Install dependencies
+## Installation
+1. Dézippe ce fichier.
+2. Copie/écrase les fichiers dans la racine de ton projet `medflash` :
+   - `app/import/index.tsx`
+   - `app/import/options.tsx`
+   - `src/services/api.ts`
+   - `src/services/backendApi.ts`
+   - `src/store/useAppStore.ts`
+   - `src/types/models.ts`
+   - `backend/src/index.js`
+   - `backend/src/generate.js`
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Notes
+- Le backend expose maintenant `/v1/jobs` avec `multipart/form-data` contenant:
+  - `file` (cours)
+  - `exam` (annale, optionnel)
+  - champs `examGuided` et `examInfluence`
+- Les warnings `expo-notifications` dans Expo Go sont normaux (SDK 53+).

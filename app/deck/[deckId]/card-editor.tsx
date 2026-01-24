@@ -1,8 +1,18 @@
-// app/deck/[deckId]/card-editor.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
-import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import * as repo from "../../../src/storage/repo";
 import { useAppStore } from "../../../src/store/useAppStore";
@@ -11,6 +21,7 @@ import { useStitchTheme } from "../../../src/uiStitch/theme";
 export default function CardEditorScreen() {
   const router = useRouter();
   const t = useStitchTheme();
+  const insets = useSafeAreaInsets();
   const { deckId, cardId } = useLocalSearchParams<{ deckId: string; cardId?: string }>();
 
   const { refreshDecks } = useAppStore();
@@ -74,9 +85,7 @@ export default function CardEditorScreen() {
         });
       }
 
-      // refresh list UI (home/decks)
       await refreshDecks();
-
       router.back();
     } catch (e: any) {
       Alert.alert("Erreur", e?.message ?? "Impossible d’enregistrer la carte.");
@@ -86,67 +95,87 @@ export default function CardEditorScreen() {
   }
 
   return (
-    <View style={[styles.root, { backgroundColor: t.bg }]}>
-      {/* Header simple */}
-      <View style={styles.top}>
-        <Pressable onPress={() => router.back()} style={styles.iconBtn} hitSlop={10}>
-          <Ionicons name="chevron-back" size={22} color={t.text} />
-        </Pressable>
+    <SafeAreaView style={[styles.root, { backgroundColor: t.bg }]} edges={["top", "left", "right"]}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        {/* Header safe-area */}
+        <View style={[styles.top, { paddingTop: Math.max(8, insets.top + 6) }]}>
+          <Pressable onPress={() => router.back()} style={styles.iconBtn} hitSlop={10}>
+            <Ionicons name="chevron-back" size={22} color={t.text} />
+          </Pressable>
 
-        <Text style={[styles.title, { color: t.text, fontFamily: t.font.display }]}>
-          {isEdit ? "Modifier la carte" : "Nouvelle carte"}
-        </Text>
+          <Text style={[styles.title, { color: t.text, fontFamily: t.font.display }]}>
+            {isEdit ? "Modifier la carte" : "Nouvelle carte"}
+          </Text>
 
-        <Pressable
-          onPress={onSave}
-          disabled={!canSave || loading}
-          style={[
-            styles.saveBtn,
-            { backgroundColor: t.primary, opacity: !canSave || loading ? 0.45 : 1 },
-          ]}
+          <Pressable
+            onPress={onSave}
+            disabled={!canSave || loading}
+            style={[styles.saveBtn, { backgroundColor: t.primary, opacity: !canSave || loading ? 0.45 : 1 }]}
+          >
+            <Text style={{ color: "#fff", fontFamily: t.font.display }}>Enregistrer</Text>
+          </Pressable>
+        </View>
+
+        {/* Scroll + safe area bas */}
+        <ScrollView
+          contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: insets.bottom + 24 }}
+          keyboardShouldPersistTaps="handled"
         >
-          <Text style={{ color: "#fff", fontFamily: t.font.display }}>Enregistrer</Text>
-        </Pressable>
-      </View>
+          <Text style={[styles.label, { color: t.muted, fontFamily: t.font.semibold }]}>QUESTION</Text>
+          <TextInput
+            value={q}
+            onChangeText={setQ}
+            placeholder="Ex: Quels sont les critères diagnostiques de… ?"
+            placeholderTextColor={t.muted}
+            multiline
+            style={[
+              styles.input,
+              {
+                backgroundColor: t.dark ? "#1c2127" : "#fff",
+                borderColor: t.border,
+                color: t.text,
+                fontFamily: t.font.body,
+              },
+            ]}
+          />
 
-      <View style={{ padding: 16, gap: 12 }}>
-        <Text style={[styles.label, { color: t.muted, fontFamily: t.font.semibold }]}>QUESTION</Text>
-        <TextInput
-          value={q}
-          onChangeText={setQ}
-          placeholder="Ex: Quels sont les critères diagnostiques de… ?"
-          placeholderTextColor={t.muted}
-          multiline
-          style={[
-            styles.input,
-            { backgroundColor: t.dark ? "#1c2127" : "#fff", borderColor: t.border, color: t.text, fontFamily: t.font.body },
-          ]}
-        />
+          <Text style={[styles.label, { color: t.muted, fontFamily: t.font.semibold }]}>RÉPONSE</Text>
+          <TextInput
+            value={a}
+            onChangeText={setA}
+            placeholder="Réponse courte, précise, orientée concours."
+            placeholderTextColor={t.muted}
+            multiline
+            style={[
+              styles.input,
+              {
+                minHeight: 140,
+                backgroundColor: t.dark ? "#1c2127" : "#fff",
+                borderColor: t.border,
+                color: t.text,
+                fontFamily: t.font.body,
+              },
+            ]}
+          />
 
-        <Text style={[styles.label, { color: t.muted, fontFamily: t.font.semibold }]}>RÉPONSE</Text>
-        <TextInput
-          value={a}
-          onChangeText={setA}
-          placeholder="Réponse courte, précise, orientée concours."
-          placeholderTextColor={t.muted}
-          multiline
-          style={[
-            styles.input,
-            { minHeight: 140, backgroundColor: t.dark ? "#1c2127" : "#fff", borderColor: t.border, color: t.text, fontFamily: t.font.body },
-          ]}
-        />
-
-        <Text style={{ color: t.muted, fontFamily: t.font.body, fontSize: 12 }}>
-          Astuce : une carte = 1 notion. Réponse “checklist” si possible.
-        </Text>
-      </View>
-    </View>
+          <Text style={{ color: t.muted, fontFamily: t.font.body, fontSize: 12 }}>
+            Astuce : une carte = 1 notion. Réponse “checklist” si possible.
+          </Text>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  top: { paddingHorizontal: 12, paddingTop: 10, paddingBottom: 10, flexDirection: "row", alignItems: "center", gap: 10 },
+  top: {
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
   iconBtn: { width: 44, height: 44, borderRadius: 999, alignItems: "center", justifyContent: "center" },
   title: { flex: 1, fontSize: 16 },
   saveBtn: { height: 40, paddingHorizontal: 14, borderRadius: 12, alignItems: "center", justifyContent: "center" },

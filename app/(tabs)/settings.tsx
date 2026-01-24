@@ -1,697 +1,389 @@
 import { Ionicons } from "@expo/vector-icons";
+import Constants from "expo-constants";
 import { useRouter } from "expo-router";
-import React from "react";
-import {
-  Alert,
-  Linking,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { Alert, Linking, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { FREE_IMPORTS_LIMIT, MOCK_API } from "../../src/config/env";
-import { CLOUD_SYNC_ENABLED } from "../../src/config/supabase";
-import * as authService from "../../src/services/authService";
-import {
-  cancelScheduled,
-  requestNotificationPermission,
-  scheduleDailyReminder,
-} from "../../src/services/notifications";
 import * as repo from "../../src/storage/repo";
 import { useAppStore } from "../../src/store/useAppStore";
-
 import { useStitchTheme } from "../../src/uiStitch/theme";
-import { TopBar } from "../../src/uiStitch/TopBar";
 
-type ThemeMode = "system" | "light" | "dark";
+const PRIVACY_POLICY_URL = "https://github.com/romaind-prog/clinicard";
+const FEEDBACK_URL = "https://github.com/romaind-prog/clinicard/issues";
 
-function SectionTitle({ children }: { children: string }) {
-  const t = useStitchTheme();
-  return (
-    <Text
-      style={[
-        styles.sectionTitle,
-        { color: t.muted, fontFamily: t.font.semibold },
-      ]}
-    >
-      {children}
-    </Text>
-  );
+type ReviewStatsExt = {
+  streak: number;
+  doneToday: number;
+  lastActiveDay: string | null;
+};
+
+function ymd(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
-function Group({ children }: { children: React.ReactNode }) {
-  const t = useStitchTheme();
-  return (
-    <View style={[styles.group, { backgroundColor: t.card, borderColor: t.border }]}>
-      {children}
-    </View>
-  );
+function dayLetterFR(d: Date) {
+  // JS: 0=Sun ... 6=Sat
+  const map = ["D", "L", "M", "M", "J", "V", "S"];
+  return map[d.getDay()] ?? "?";
 }
 
-function Divider() {
-  const t = useStitchTheme();
-  return <View style={[styles.divider, { backgroundColor: t.border }]} />;
-}
-
-function Row({
+function ActionCard({
   icon,
   title,
-  subtitle,
-  right,
   onPress,
-  danger,
+  right,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
-  subtitle?: string;
-  right?: React.ReactNode;
-  onPress?: () => void;
-  danger?: boolean;
-}) {
-  const t = useStitchTheme();
-  const Container: any = onPress ? Pressable : View;
-
-  return (
-    <Container
-      onPress={onPress}
-      style={({ pressed }: any) => [
-        styles.row,
-        onPress && { opacity: pressed ? 0.9 : 1 },
-      ]}
-    >
-      <View style={styles.left}>
-        <View
-          style={[
-            styles.iconBox,
-            { backgroundColor: t.dark ? "#283039" : "#EEF2FF" },
-          ]}
-        >
-          <Ionicons
-            name={icon}
-            size={18}
-            color={danger ? "#ef4444" : t.text}
-          />
-        </View>
-
-        <View style={{ flex: 1 }}>
-          <Text
-            style={{
-              color: danger ? "#ef4444" : t.text,
-              fontFamily: t.font.body,
-              fontSize: 16, // ✅ 16 comme ton HTML
-              lineHeight: 20,
-            }}
-            numberOfLines={1}
-          >
-            {title}
-          </Text>
-
-          {!!subtitle && (
-            <Text
-              style={{
-                marginTop: 4,
-                color: t.muted,
-                fontFamily: t.font.body,
-                fontSize: 12,
-                lineHeight: 16,
-              }}
-              numberOfLines={1}
-            >
-              {subtitle}
-            </Text>
-          )}
-        </View>
-      </View>
-
-      {right ? <View style={styles.right}>{right}</View> : null}
-    </Container>
-  );
-}
-
-function RightValue({ children }: { children: React.ReactNode }) {
-  const t = useStitchTheme();
-  return (
-    <Text style={{ color: t.muted, fontFamily: t.font.body, fontSize: 15 }}>
-      {children}
-    </Text>
-  );
-}
-
-/** ✅ petit “segmented” ultra simple pour le thème */
-function ModePill({
-  label,
-  active,
-  onPress,
-}: {
-  label: string;
-  active: boolean;
   onPress: () => void;
+  right?: React.ReactNode;
 }) {
   const t = useStitchTheme();
   return (
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [
-        styles.modePill,
+        styles.actionCard,
         {
-          backgroundColor: active ? t.primary : (t.dark ? "#283039" : "#EEF2FF"),
+          backgroundColor: t.card,
+          borderColor: t.border,
           opacity: pressed ? 0.9 : 1,
         },
       ]}
     >
-      <Text
-        style={{
-          color: active ? "#fff" : t.text,
-          fontFamily: t.font.display,
-          fontSize: 13,
-        }}
-      >
-        {label}
-      </Text>
+      <View style={styles.actionLeft}>
+        <View
+          style={[
+            styles.actionIcon,
+            { backgroundColor: t.dark ? "rgba(19,127,236,0.15)" : "rgba(19,127,236,0.10)" },
+          ]}
+        >
+          <Ionicons name={icon} size={20} color={t.primary} />
+        </View>
+        <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 16 }}>{title}</Text>
+      </View>
+
+      <View style={styles.actionRight}>
+        {right ?? <Ionicons name="chevron-forward" size={18} color={t.muted} />}
+      </View>
     </Pressable>
   );
 }
 
-export default function SettingsScreen() {
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  const t = useStitchTheme();
+  return (
+    <Text style={{ marginTop: 22, marginBottom: 10, color: t.text, fontFamily: t.font.display, fontSize: 22 }}>
+      {children}
+    </Text>
+  );
+}
+
+function LinkRow({ label, onPress }: { label: string; onPress: () => void }) {
+  const t = useStitchTheme();
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
+      <Text style={{ color: t.muted, fontFamily: t.font.medium, fontSize: 14, marginTop: 10 }}>{label}</Text>
+    </Pressable>
+  );
+}
+
+function StreakWeekCard({ streak, lastActiveDay }: { streak: number; lastActiveDay: string | null }) {
+  const t = useStitchTheme();
+
+  const today = useMemo(() => new Date(), []);
+  const end = lastActiveDay ?? null;
+  const start = useMemo(() => {
+    if (!end || !streak || streak <= 0) return null;
+    const endDate = new Date(end);
+    if (Number.isNaN(endDate.getTime())) return null;
+    const startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - (streak - 1));
+    return ymd(startDate);
+  }, [end, streak]);
+
+  const endYmd = useMemo(() => {
+    if (!end) return null;
+    // end is already a YYYY-MM-DD string in repo
+    return end;
+  }, [end]);
+
+  const days = useMemo(() => {
+    const arr: Date[] = [];
+    const base = new Date(today);
+    base.setHours(12, 0, 0, 0);
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(base);
+      d.setDate(base.getDate() - i);
+      arr.push(d);
+    }
+    return arr;
+  }, [today]);
+
+  return (
+    <View style={[styles.cardBox, { backgroundColor: t.card, borderColor: t.border }]}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 16, paddingBottom: 12 }}>
+        <View
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 12,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: t.dark ? "rgba(249,115,22,0.18)" : "rgba(249,115,22,0.14)",
+          }}
+        >
+          <Ionicons name="flame" size={20} color="#f97316" />
+        </View>
+        <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 18 }}>{streak} jour{streak > 1 ? "s" : ""} série</Text>
+      </View>
+
+      <View style={[styles.divider, { backgroundColor: t.dark ? "rgba(255,255,255,0.06)" : "#E5E7EB" }]} />
+
+      <View style={{ flexDirection: "row", justifyContent: "space-between", padding: 14, paddingTop: 12 }}>
+        {days.map((d) => {
+          const dYmd = ymd(d);
+          const inStreak = !!start && !!endYmd && dYmd >= start && dYmd <= endYmd;
+          const isToday = dYmd === ymd(new Date());
+          return (
+            <View key={dYmd} style={{ alignItems: "center", width: 38 }}>
+              <View
+                style={{
+                  width: 34,
+                  height: 34,
+                  borderRadius: 17,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderWidth: 2,
+                  borderColor: inStreak ? "rgba(249,115,22,0.35)" : t.border,
+                  backgroundColor: inStreak ? "rgba(249,115,22,0.15)" : "transparent",
+                }}
+              >
+                <Text
+                  style={{
+                    color: inStreak ? "#f97316" : t.muted,
+                    fontFamily: t.font.display,
+                    fontSize: 13,
+                  }}
+                >
+                  {d.getDate()}
+                </Text>
+              </View>
+              <Text style={{ marginTop: 6, color: isToday ? t.text : t.muted, fontFamily: t.font.medium, fontSize: 12 }}>
+                {dayLetterFR(d)}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+function StatTile({ label, value, icon }: { label: string; value: string; icon: keyof typeof Ionicons.glyphMap }) {
+  const t = useStitchTheme();
+  return (
+    <View style={[styles.statTile, { backgroundColor: t.card, borderColor: t.border }]}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <View
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 14,
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: t.dark ? "rgba(19,127,236,0.15)" : "rgba(19,127,236,0.10)",
+          }}
+        >
+          <Ionicons name={icon} size={20} color={t.primary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: t.muted, fontFamily: t.font.medium, fontSize: 12 }}>{label}</Text>
+          <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 22, marginTop: 2 }}>{value}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+export default function ProfileTabScreen() {
   const t = useStitchTheme();
   const router = useRouter();
-  const { darkMode, setDarkMode, authUser, logout: logoutUser } = useAppStore();
+  const insets = useSafeAreaInsets();
 
+  const isSubscribed = useAppStore((s) => s.isSubscribed);
+  const reviewStats = useAppStore((s) => s.reviewStats);
+  const decks = useAppStore((s) => s.decks);
 
-  const {
-    level,
-    setLevel,
-    freeImportsUsed,
-    resetAll,
-    creditsBalance,
-    addCredits,
-    reminder,
-    setReminderLocal,
-    refreshReminder,
+  const [extStats, setExtStats] = useState<ReviewStatsExt>({
+    streak: reviewStats.streak,
+    doneToday: reviewStats.doneToday,
+    lastActiveDay: null,
+  });
 
-    themeMode,
-    setThemeMode,
-  } = useAppStore() as any as {
-    level: string;
-    setLevel: (l: any) => void;
-    freeImportsUsed: number;
-    resetAll: () => void;
-    creditsBalance: number;
-    addCredits: (n: number) => void;
-    reminder: { enabled: boolean; hour: number; minute: number; notifId: string | null };
-    setReminderLocal: (v: { hour: number; minute: number }) => void;
-    refreshReminder: () => Promise<void>;
-    themeMode: ThemeMode;
-    setThemeMode: (m: ThemeMode) => Promise<void> | void;
-  };
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const s = await repo.getReviewStats();
+        if (!alive) return;
+        setExtStats({ streak: s.streak, doneToday: s.doneToday, lastActiveDay: s.lastActiveDay });
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [reviewStats.streak, reviewStats.doneToday]);
 
-  function onReset() {
-    Alert.alert("Reset", "Supprimer decks + reviews (MVP) ?", [
-      { text: "Annuler", style: "cancel" },
-      { text: "OK", style: "destructive", onPress: () => resetAll() },
-    ]);
+  const version =
+    (Constants.expoConfig as any)?.version ??
+    (Constants.manifest as any)?.version ??
+    (Constants.expoConfig as any)?.runtimeVersion ??
+    "";
+
+  async function onInvite() {
+    try {
+      await Share.share({
+        message:
+          "Je révise avec CliniCard (flashcards + QCM). Tu veux tester ?\n\n" + PRIVACY_POLICY_URL,
+      });
+    } catch {
+      // ignore
+    }
   }
 
-  async function toggleReminder(next: boolean) {
-    if (!next) {
-      await cancelScheduled(reminder.notifId);
-      await repo.setReminderSettings({ ...reminder, enabled: false, notifId: null });
-      await refreshReminder();
-      return;
+  async function onFeedback() {
+    try {
+      await Linking.openURL(FEEDBACK_URL);
+    } catch {
+      Alert.alert("Impossible d'ouvrir le lien");
     }
-
-    const ok = await requestNotificationPermission();
-    if (!ok) {
-      Alert.alert("Permission refusée", "Active les notifications dans les réglages iOS/Android.");
-      return;
-    }
-
-    await cancelScheduled(reminder.notifId);
-
-    const id = await scheduleDailyReminder({
-      hour: reminder.hour,
-      minute: reminder.minute,
-      title: "Révision CliniCard",
-      body: "10 minutes aujourd’hui et tu progresses 🔥",
-    });
-
-    await repo.setReminderSettings({ ...reminder, enabled: true, notifId: id });
-    await refreshReminder();
-  }
-
-  async function applyHour() {
-    if (!reminder.enabled) {
-      await repo.setReminderSettings({ ...reminder, notifId: null });
-      await refreshReminder();
-      return;
-    }
-
-    const ok = await requestNotificationPermission();
-    if (!ok) {
-      Alert.alert("Permission refusée", "Active les notifications dans les réglages iOS/Android.");
-      return;
-    }
-
-    await cancelScheduled(reminder.notifId);
-
-    const id = await scheduleDailyReminder({
-      hour: reminder.hour,
-      minute: reminder.minute,
-      title: "Révision CliniCard",
-      body: "10 minutes aujourd’hui et tu progresses 🔥",
-    });
-
-    await repo.setReminderSettings({ ...reminder, enabled: true, notifId: id });
-    await refreshReminder();
-  }
-
-  const reminderLabel = `${String(reminder.hour).padStart(2, "0")}:${String(reminder.minute).padStart(2, "0")}`;
-
-  async function handleLogout() {
-    Alert.alert(
-      "Déconnexion",
-      "Tu vas te déconnecter. Tes données locales resteront sur cet appareil.",
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "Déconnexion",
-          style: "destructive",
-          onPress: async () => {
-            await logoutUser();
-            Alert.alert("Déconnecté", "Tu peux te reconnecter à tout moment.");
-          },
-        },
-      ]
-    );
-  }
-
-  async function handleDeleteAccount() {
-    Alert.alert(
-      "Supprimer mon compte",
-      "Cette action est irréversible. Toutes tes données seront définitivement supprimées :\n\n• Tes decks et flashcards\n• Tes révisions et statistiques\n• Ton compte et tes données cloud\n\nEs-tu sûr de vouloir continuer ?",
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "Supprimer définitivement",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              const { success, error } = await authService.deleteAccount();
-              
-              if (success) {
-                // Réinitialiser l'état de l'app
-                await logoutUser();
-                Alert.alert(
-                  "Compte supprimé",
-                  "Ton compte et toutes tes données ont été supprimés avec succès.",
-                  [
-                    {
-                      text: "OK",
-                      onPress: () => {
-                        // Rediriger vers l'écran d'accueil
-                        router.replace("/(tabs)");
-                      },
-                    },
-                  ]
-                );
-              } else {
-                Alert.alert("Erreur", error || "Impossible de supprimer le compte. Réessaie plus tard.");
-              }
-            } catch (e: any) {
-              Alert.alert("Erreur", e?.message || "Une erreur est survenue lors de la suppression.");
-            }
-          },
-        },
-      ]
-    );
   }
 
   async function openPrivacyPolicy() {
-    const url = "https://romaind-prog.github.io/clinicard/privacy-policy.html";
     try {
-      // Vérifier si l'URL peut être ouverte
-      const supported = await Linking.canOpenURL(url);
-      
-      if (supported) {
-        // Ouvrir l'URL dans le navigateur
-        await Linking.openURL(url);
-      } else {
-        // Si l'URL n'est pas supportée, essayer quand même (certaines plateformes retournent false même si ça marche)
-        try {
-          await Linking.openURL(url);
-        } catch (openError: any) {
-          Alert.alert(
-            "URL inaccessible",
-            `Impossible d'ouvrir la page de confidentialité.\n\nURL : ${url}\n\nVérifie ta connexion internet ou réessaie plus tard.`,
-            [{ text: "OK" }]
-          );
-        }
-      }
-    } catch (error: any) {
-      console.error("Erreur ouverture Privacy Policy:", error);
-      Alert.alert(
-        "Erreur",
-        `Impossible d'ouvrir la page de confidentialité.\n\nErreur : ${error?.message || "Inconnue"}\n\nURL : ${url}`,
-        [{ text: "OK" }]
-      );
+      await Linking.openURL(PRIVACY_POLICY_URL);
+    } catch {
+      Alert.alert("Impossible d'ouvrir le lien");
     }
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
-      <TopBar   title="Réglages"
-  showBack={false} // ✅
-  rightIcon="settings-outline" // si tu veux, sinon retire
-  onPressRight={() => {}}
-  variant="large"/>
+    <SafeAreaView style={[styles.root, { backgroundColor: t.bg }]} edges={["top", "left", "right"]}>
+      <ScrollView
+        contentContainerStyle={{
+          paddingTop: Math.max(10, insets.top + 6),
+          paddingBottom: insets.bottom + 24,
+          paddingHorizontal: 18,
+        }}
+      >
+        {/* Header */}
+        <View style={styles.headerRow}>
+          <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 40, letterSpacing: -0.5 }}>
+            Profil
+          </Text>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 10, paddingBottom: 120 }}>
-        {/* COMPTE */}
-        {CLOUD_SYNC_ENABLED && (
-          <>
-            <SectionTitle>COMPTE</SectionTitle>
-            <Group>
-              {authUser ? (
-                <>
-                  <Row
-                    icon="person-circle-outline"
-                    title={authUser.email}
-                    subtitle="Connecté • Sync automatique activée"
-                    right={<Ionicons name="checkmark-circle" size={20} color="#10b981" />}
-                  />
-                  <Divider />
-                  <Row
-                    icon="log-out-outline"
-                    title="Déconnexion"
-                    subtitle="Reste en mode local"
-                    onPress={handleLogout}
-                    danger
-                    right={<Ionicons name="chevron-forward" size={18} color={t.muted} />}
-                  />
-                  <Divider />
-                  <Row
-                    icon="trash-outline"
-                    title="Supprimer mon compte"
-                    subtitle="RGPD • Action irréversible"
-                    onPress={handleDeleteAccount}
-                    danger
-                    right={<Ionicons name="chevron-forward" size={18} color={t.muted} />}
-                  />
-                </>
-              ) : (
-                <>
-                  <Row
-                    icon="cloud-offline-outline"
-                    title="Mode local uniquement"
-                    subtitle="Connecte-toi pour sauvegarder dans le cloud"
-                  />
-                  <Divider />
-                  <Row
-                    icon="log-in-outline"
-                    title="Se connecter"
-                    subtitle="Accède à tes cours partout"
-                    onPress={() => router.push("/auth/login")}
-                    right={<Ionicons name="chevron-forward" size={18} color={t.muted} />}
-                  />
-                  <Divider />
-                  <Row
-                    icon="person-add-outline"
-                    title="Créer un compte"
-                    subtitle="Sauvegarde tes données dans le cloud"
-                    onPress={() => router.push("/auth/signup")}
-                    right={<Ionicons name="chevron-forward" size={18} color={t.muted} />}
-                  />
-                </>
-              )}
-            </Group>
-          </>
-        )}
-
-        {/* CONFIG */}
-        <SectionTitle>CONFIG MVP</SectionTitle>
-        <Group>
-          <Row
-            icon="flask-outline"
-            title="Mock API"
-            subtitle="Mode test / prod"
-            right={<RightValue>{String(MOCK_API)}</RightValue>}
-          />
-          <Divider />
-
-          <Row
-            icon="school-outline"
-            title="Niveau"
-            subtitle="PASS / EDN_ECOS"
-            right={<RightValue>{level}</RightValue>}
-          />
-          <Divider />
-
-          <Row
-            icon="cloud-upload-outline"
-            title="Imports utilisés"
-            subtitle={`${freeImportsUsed} / ${FREE_IMPORTS_LIMIT}`}
-            right={<Ionicons name="chevron-forward" size={18} color={t.muted} />}
-          />
-          <Divider />
-
-          <Row
-            icon="flash-outline"
-            title="Crédits"
-            subtitle="Solde actuel"
-            right={<RightValue>{creditsBalance}</RightValue>}
-          />
-        </Group>
-
-        {/* APPARENCE */}
-        <SectionTitle>APPARENCE</SectionTitle>
-        <Group>
-        <Row
-              icon="moon-outline"
-              title="Mode nuit"
-              subtitle={darkMode ? "Activé" : "Auto (système)"}
-              right={
-                <Switch
-                  value={darkMode}
-                  onValueChange={(v) => setDarkMode(v)}
-                  trackColor={{ false: t.dark ? "#283039" : "#E5E7EB", true: t.primary }}
-                  thumbColor={"#fff"}
-                />
-              }
-            />
-            
-        </Group>
-
-        {/* STUDY */}
-        <SectionTitle>STUDY PREFERENCES</SectionTitle>
-        <Group>
-          <Row
-            icon="notifications-outline"
-            title="Review Reminders"
-            subtitle={reminder.enabled ? `Actif • ${reminderLabel}` : "Inactif"}
-            right={
-              <Switch
-                value={reminder.enabled}
-                onValueChange={(v) => toggleReminder(v)}
-                trackColor={{ false: t.dark ? "#283039" : "#E5E7EB", true: t.primary }}
-                thumbColor={"#fff"}
-              />
-          }
-          />
-
-
-          <Divider />
-
-          <View style={{ padding: 12 }}>
-            <Text style={{ color: t.muted, fontFamily: t.font.body, marginBottom: 10, fontSize: 12 }}>
-              Choisir une heure (MVP)
+          <Pressable
+            onPress={() => router.push("/paywall")}
+            style={({ pressed }) => [
+              styles.upgradeBtn,
+              {
+                backgroundColor: isSubscribed ? (t.dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)") : "#6D28D9",
+                opacity: pressed ? 0.9 : 1,
+              },
+            ]}
+          >
+            <Ionicons name="sparkles" size={18} color={isSubscribed ? t.text : "#fff"} />
+            <Text
+              style={{
+                color: isSubscribed ? t.text : "#fff",
+                fontFamily: t.font.display,
+                fontSize: 15,
+              }}
+            >
+              {isSubscribed ? "Premium" : "Mettre à niveau"}
             </Text>
+          </Pressable>
+        </View>
 
-            <View style={{ flexDirection: "row", gap: 10 }}>
-              <ModePill label="19:00" active={reminder.hour === 19} onPress={() => setReminderLocal({ hour: 19, minute: 0 })} />
-              <ModePill label="20:00" active={reminder.hour === 20} onPress={() => setReminderLocal({ hour: 20, minute: 0 })} />
-              <ModePill label="21:00" active={reminder.hour === 21} onPress={() => setReminderLocal({ hour: 21, minute: 0 })} />
-            </View>
-
-            <View style={{ height: 12 }} />
-
-            <Pressable
-              onPress={applyHour}
-              style={({ pressed }) => [
-                styles.primaryBtn,
-                { backgroundColor: t.primary, opacity: pressed ? 0.9 : 1 },
-              ]}
-            >
-              <Text style={{ color: "#fff", fontFamily: t.font.display, fontSize: 14 }}>
-                Appliquer l’heure
-              </Text>
-            </Pressable>
-          </View>
-        </Group>
-
-        {/* NIVEAU */}
-        <SectionTitle>NIVEAU</SectionTitle>
-        <Group>
-          <View style={{ flexDirection: "row", gap: 10, padding: 12 }}>
-            <Pressable
-              onPress={() => setLevel("PASS")}
-              style={({ pressed }) => [
-                styles.levelBtn,
-                {
-                  backgroundColor: level === "PASS" ? t.primary : (t.dark ? "#283039" : "#EEF2FF"),
-                  opacity: pressed ? 0.9 : 1,
-                },
-              ]}
-            >
-              <Text style={{ color: level === "PASS" ? "#fff" : t.text, fontFamily: t.font.display }}>PASS</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setLevel("EDN_ECOS")}
-              style={({ pressed }) => [
-                styles.levelBtn,
-                {
-                  backgroundColor: level === "EDN_ECOS" ? t.primary : (t.dark ? "#283039" : "#EEF2FF"),
-                  opacity: pressed ? 0.9 : 1,
-                },
-              ]}
-            >
-              <Text style={{ color: level === "EDN_ECOS" ? "#fff" : t.text, fontFamily: t.font.display }}>
-                EDN_ECOS
-              </Text>
-            </Pressable>
-          </View>
-        </Group>
-
-        {/* PAYWALL TEST */}
-        <SectionTitle>PAYWALL (TEST)</SectionTitle>
-        <Group>
-          <Row
-            icon="add-circle-outline"
-            title="(Test) +10 crédits"
-            subtitle="Debug uniquement"
-            onPress={() => addCredits(10)}
-            right={<Ionicons name="chevron-forward" size={18} color={t.muted} />}
+        {/* Quick actions */}
+        <View style={{ marginTop: 14, gap: 12 }}>
+          <ActionCard
+            icon="settings-outline"
+            title="Paramètres du profil"
+            onPress={() => router.push("/profile-settings")}
           />
-        </Group>
+          <ActionCard icon="person-add-outline" title="Inviter des amis" onPress={onInvite} />
+          <ActionCard icon="chatbubble-ellipses-outline" title="Commentaires" onPress={onFeedback} />
+        </View>
 
-        {/* DEBUG */}
-        <SectionTitle>DEBUG</SectionTitle>
-        <Group>
-          <Row
-            icon="trash-outline"
-            title="Reset local (decks + révisions)"
-            subtitle="Supprime les données locales"
-            onPress={onReset}
-            danger
-            right={<Ionicons name="chevron-forward" size={18} color={t.muted} />}
-          />
-          <Divider />
-          <Row
-            icon="refresh-outline"
-            title="Rejouer onboarding"
-            subtitle="Relance l’app ensuite"
-            onPress={async () => {
-              await repo.setOnboardingDone(false);
-              Alert.alert("OK", "Relance l'app (ou reload) pour revoir l'onboarding.");
-            }}
-            right={<Ionicons name="chevron-forward" size={18} color={t.muted} />}
-          />
-        </Group>
+        {/* Streak */}
+        <SectionTitle>Série</SectionTitle>
+        <StreakWeekCard streak={extStats.streak ?? 0} lastActiveDay={extStats.lastActiveDay} />
 
-        {/* LÉGAL */}
-        <SectionTitle>LÉGAL</SectionTitle>
-        <Group>
-          <Row
-            icon="shield-checkmark-outline"
-            title="Politique de confidentialité"
-            subtitle="Privacy Policy"
-            onPress={openPrivacyPolicy}
-            right={<Ionicons name="open-outline" size={18} color={t.muted} />}
-          />
-        </Group>
+        {/* Goals */}
+        <SectionTitle>Objectifs quotidiens</SectionTitle>
+        <View style={{ flexDirection: "row", gap: 12 }}>
+          <StatTile label="Révisions aujourd'hui" value={String(extStats.doneToday ?? 0)} icon="time-outline" />
+          <StatTile label="Decks" value={String(decks?.length ?? 0)} icon="albums-outline" />
+        </View>
 
-        <Text style={{ marginTop: 18, textAlign: "center", color: t.muted, fontFamily: t.font.body, fontSize: 12 }}>
-          CliniCard • MVP
-        </Text>
+        {/* Links */}
+        <View style={{ marginTop: 26 }}>
+          <LinkRow label="Politique de confidentialité" onPress={openPrivacyPolicy} />
+          <LinkRow label="Signaler un bug / Idées" onPress={onFeedback} />
+          <Text style={{ marginTop: 16, color: t.muted, fontFamily: t.font.body, fontSize: 12 }}>
+            {version ? `Version ${version}` : ""}
+          </Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionTitle: {
-    marginTop: 16,
-    marginBottom: 8,
-    marginLeft: 10,
-    fontSize: 12,
-    letterSpacing: 1.2, // ✅ plus “tracking” comme le HTML
+  root: { flex: 1 },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 14,
+  },
+  upgradeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 16,
+    height: 44,
+    borderRadius: 22,
   },
 
-  group: {
+  actionCard: {
+    height: 72,
     borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
-    overflow: "hidden",
-    marginHorizontal: 6, // ✅ comme “mx-2”
-  },
-
-  row: {
-    minHeight: 56,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
   },
+  actionLeft: { flexDirection: "row", alignItems: "center", gap: 14 },
+  actionIcon: { width: 38, height: 38, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  actionRight: { alignItems: "center", justifyContent: "center" },
 
-  left: {
+  cardBox: { borderRadius: 18, borderWidth: StyleSheet.hairlineWidth, overflow: "hidden" },
+  divider: { height: StyleSheet.hairlineWidth },
+
+  statTile: {
     flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  right: {
-    marginLeft: 12,
-    alignItems: "flex-end",
-    justifyContent: "center",
-  },
-
-  iconBox: {
-    width: 40, // ✅ comme le HTML size-10
-    height: 40,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    marginLeft: 14 + 40 + 12, // ✅ démarre après l’icône (comme ton sep)
-  },
-
-  modePill: {
-    height: 32,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  primaryBtn: {
-    height: 48,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  levelBtn: {
-    flex: 1,
-    height: 48,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 14,
   },
 });
