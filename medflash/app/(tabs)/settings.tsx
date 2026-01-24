@@ -9,7 +9,7 @@ import * as repo from "../../src/storage/repo";
 import { useAppStore } from "../../src/store/useAppStore";
 import { useStitchTheme } from "../../src/uiStitch/theme";
 
-const PRIVACY_POLICY_URL = "https://github.com/romaind-prog/clinicard";
+const PRIVACY_POLICY_URL = "https://romaind-prog.github.io/clinicard/privacy-policy.html";
 const FEEDBACK_URL = "https://github.com/romaind-prog/clinicard/issues";
 
 type ReviewStatsExt = {
