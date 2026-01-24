@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Tabs, useRouter } from "expo-router";
 import { useCallback } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
+
 import * as repo from "../../src/storage/repo";
 import { useAppStore } from "../../src/store/useAppStore";
 import { useStitchTheme } from "../../src/uiStitch/theme";
@@ -19,7 +20,7 @@ export default function TabsLayout() {
 
   const decks = useAppStore((s: any) => s.decks) as any[];
 
-  // On évite toute requête DB au montage (ça peut geler certains environnements).
+  // Évite toute requête DB au montage (certains environnements plantent si on tape la DB trop tôt).
   // On calcule "hasDueCards" uniquement quand l'utilisateur appuie sur Play.
   const handlePlayPress = useCallback(async () => {
     try {
@@ -135,14 +136,6 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-outline" color={color} size={size} />
           ),
-        }}
-      />
-
-      {/* Onglets cachés */}
-      <Tabs.Screen
-        name="import"
-        options={{
-          href: null,
         }}
       />
     </Tabs>

@@ -1,12 +1,41 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { completePasswordRecoveryFromUrl, setNewPassword } from "../../src/services/authService";
+import { setRecoverySessionFromUrl, updatePasswordFromRecovery } from "../../src/services/authService";
 import { useStitchTheme } from "../../src/uiStitch/theme";
+
+type RecoveryTokens = {
+  access_token?: string | null;
+  refresh_token?: string | null;
+  type?: string | null;
+};
+
+function extractRecoveryTokens(url: string): RecoveryTokens {
+  // Supporte:
+  // - medflash://auth/reset#access_token=...&refresh_token=...&type=recovery
+  // - medflash://auth/reset?access_token=...&refresh_token=...&type=recovery
+  // - (au cas où) mélange des deux
+  const [beforeHash, hashPart = ""] = url.split("#");
+  const queryPart = beforeHash.split("?")[1] ?? "";
+
+  const query = new URLSearchParams(queryPart);
+  const hash = new URLSearchParams(hashPart);
+
+  const access_token = hash.get("access_token") ?? query.get("access_token");
+  const refresh_token = hash.get("refresh_token") ?? query.get("refresh_token");
+  const type = hash.get("type") ?? query.get("type");
+
+  return { access_token, refresh_token, type };
+}
+
+function hasRecoveryTokens(url: string) {
+  const t = extractRecoveryTokens(url);
+  return !!(t.access_token && t.refresh_token);
+}
 
 export default function ResetPasswordScreen() {
   const t = useStitchTheme();
@@ -17,39 +46,69 @@ export default function ResetPasswordScreen() {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const url = Linking.useURL();
+  // Important: on "lock" seulement quand on a réellement réussi à traiter un lien valide
+  const handledValidLink = useRef(false);
 
-  // On peut arriver ici via un deep link (expo go = exp://.../--/auth/reset#..., prod = medflash://auth/reset#...)
   useEffect(() => {
     let alive = true;
-    (async () => {
+
+    const failAndExit = (title: string, msg: string) => {
+      if (!alive) return;
+      Alert.alert(title, msg, [{ text: "OK", onPress: () => router.replace("/auth/login") }]);
+    };
+
+    const tryHandleUrl = async (incomingUrl: string | null | undefined) => {
+      if (!alive) return;
+      if (!incomingUrl) return false;
+      if (handledValidLink.current) return true;
+
+      // Si l'URL ne contient pas (encore) les tokens, on ne lock pas.
+      // (ex: certaines pages web ouvrent l'app puis injectent le hash après)
+      if (!hasRecoveryTokens(incomingUrl)) return false;
+
       try {
-        const initial = url ?? (await Linking.getInitialURL());
-        const { error } = await completePasswordRecoveryFromUrl(initial);
+        const { error } = await setRecoverySessionFromUrl(incomingUrl);
         if (error) {
-          // Souvent : lien expiré / déjà utilisé
-          Alert.alert(
-            "Lien invalide",
-            error,
-            [{ text: "OK", onPress: () => router.replace("/auth/login") }]
-          );
-          return;
+          failAndExit("Lien invalide", error);
+          return true; // lien traité (même si invalide)
         }
-      } catch (e: any) {
-        Alert.alert(
-          "Erreur",
-          e?.message ?? "Impossible de valider le lien de réinitialisation.",
-          [{ text: "OK", onPress: () => router.replace("/auth/login") }]
-        );
-        return;
-      } finally {
+
+        handledValidLink.current = true;
         if (alive) setReady(true);
+        return true;
+      } catch (e: any) {
+        failAndExit("Erreur", e?.message ?? "Impossible de valider le lien.");
+        return true;
+      }
+    };
+
+    // 1) Essaye au démarrage (cold start)
+    (async () => {
+      const initial = await Linking.getInitialURL();
+      const handled = await tryHandleUrl(initial);
+
+      // Si pas de lien valide au démarrage, on attend un éventuel event "url"
+      if (!handled) {
+        // Petit timeout de sécurité: si rien n’arrive, on affiche le message
+        setTimeout(() => {
+          if (!alive) return;
+          if (!handledValidLink.current) {
+            failAndExit("Lien manquant", "Ouvre le lien de réinitialisation depuis l’email.");
+          }
+        }, 1500);
       }
     })();
+
+    // 2) Essaye aussi via event (souvent nécessaire sur iOS)
+    const sub = Linking.addEventListener("url", async ({ url }) => {
+      await tryHandleUrl(url);
+    });
+
     return () => {
       alive = false;
+      sub.remove();
     };
-  }, [router, url]);
+  }, [router]);
 
   const canSubmit = useMemo(() => {
     if (!password || password.length < 8) return false;
@@ -58,14 +117,16 @@ export default function ResetPasswordScreen() {
   }, [password, confirm]);
 
   async function onSubmit() {
-    if (!canSubmit || loading) return;
+    if (!ready || !canSubmit || loading) return;
+
     setLoading(true);
     try {
-      const { error } = await setNewPassword(password);
+      const { error } = await updatePasswordFromRecovery(password);
       if (error) {
         Alert.alert("Erreur", error);
         return;
       }
+
       Alert.alert("Mot de passe modifié", "Tu peux maintenant te reconnecter.", [
         { text: "OK", onPress: () => router.replace("/auth/login") },
       ]);
@@ -77,14 +138,20 @@ export default function ResetPasswordScreen() {
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: t.bg }]} edges={["top", "left", "right"]}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()} hitSlop={10} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
+        <Pressable
+          onPress={() => router.back()}
+          hitSlop={10}
+          style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+        >
           <Ionicons name="chevron-back" size={26} color={t.text} />
         </Pressable>
-        <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 18 }}>Nouveau mot de passe</Text>
+        <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 18 }}>
+          Nouveau mot de passe
+        </Text>
         <View style={{ width: 26 }} />
       </View>
 
-      <View style={[styles.card, { backgroundColor: t.card, borderColor: t.border }]}> 
+      <View style={[styles.card, { backgroundColor: t.card, borderColor: t.border }]}>
         <Text style={{ color: t.muted, fontFamily: t.font.body, fontSize: 13, lineHeight: 18 }}>
           Choisis un nouveau mot de passe (8 caractères minimum).
         </Text>
