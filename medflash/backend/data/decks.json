@@ -1,0 +1,1733 @@
+[
+  {
+    "id": "6ZO_1GbS-VOJJvXNfcmU8",
+    "title": "Deck de Révision sur la Scoliose",
+    "createdAt": 1768001649938,
+    "level": "PASS",
+    "cards": [
+      {
+        "id": "335j629ZIGa1I9fYFaUEV",
+        "question": "Quelle est la définition de la scoliose ?",
+        "answer": "Déformation tridimensionnelle du rachis entraînant une courbure latérale."
+      },
+      {
+        "id": "mMY9MaZxcWNCEqk-lzkxy",
+        "question": "Quels sont les types d'étiologies de la scoliose chez l'enfant ?",
+        "answer": "Scoliose idiopathique et scoliose secondaire."
+      },
+      {
+        "id": "p3nk0yIylxVeXTNDTIzlY",
+        "question": "Quelles sont les causes de la scoliose idiopathique ?",
+        "answer": "Non identifiées ; facteurs génétiques et environnementaux peuvent jouer."
+      },
+      {
+        "id": "1xH5blsfGeCT3lA7SrIDA",
+        "question": "Quels sont les types de scoliose chez l'adulte ?",
+        "answer": "Scoliose dégénérative, scoliose cérébrale et scoliose post-traumatique."
+      },
+      {
+        "id": "pec5KQ2e39B9OyX0honC_",
+        "question": "Quel angle est utilisé pour évaluer la scoliose lors de l'examen ?",
+        "answer": "Angle de Cobb."
+      },
+      {
+        "id": "W1PyEGWAtw4UHRFiYFTa6",
+        "question": "Quelles sont les vertèbres cervicales supérieures ?",
+        "answer": "C0 à C2."
+      },
+      {
+        "id": "BbZ3j8bR6QCNFom5m3Zxs",
+        "question": "Quel est le rôle principal du rachis dorsal ?",
+        "answer": "Protection des organes internes."
+      },
+      {
+        "id": "Zo0atTE2JyFNXaIKEmrIn",
+        "question": "Quels sont les mouvements autorisés dans le rachis cervical inférieur ?",
+        "answer": "Flexion, extension et rotation."
+      },
+      {
+        "id": "lgf9SOd8wEGyjKPZd0lai",
+        "question": "Quels muscles sont impliqués dans le rachis ?",
+        "answer": "Carré des lombes, grand dorsal, ilio-psoas."
+      },
+      {
+        "id": "fqa2fF0sNePGqpppvgswM",
+        "question": "Quel est le nombre de vertèbres dans le rachis lombaire ?",
+        "answer": "5 vertèbres."
+      },
+      {
+        "id": "6oW9MXKzvRifa9Mg16txc",
+        "question": "Quel est l'angle normal de lordose mesuré entre L1 et le plateau sacré ?",
+        "answer": "Entre 20 et 60°, avec une moyenne autour de 50°."
+      },
+      {
+        "id": "7JWdU6HZWceiLTNGQ_jr_",
+        "question": "Quelle pathologie est associée aux vertèbres T1 et K1 ?",
+        "answer": "Ganglion stellaire."
+      },
+      {
+        "id": "S3y0VdUGBNuwBXvi6Ai8a",
+        "question": "Quel est le pivot de la mobilité scapulaire et cervicale ?",
+        "answer": "T4."
+      },
+      {
+        "id": "2oDH_zOoca3Di3GIFo401",
+        "question": "Quelles sont les conséquences à long terme des scolioses idiopathiques ?",
+        "answer": "Déformation permanente et douleurs chroniques."
+      },
+      {
+        "id": "oYBSE7UoPk6nYmVMP2u_X",
+        "question": "Quels sont les critères de diagnostic différentiel des maladies de Scheuermann ?",
+        "answer": "Jeunesse, hypercyphose, et douleur dorsale."
+      },
+      {
+        "id": "Ub2RCskuWXnpyQ2-CLGMc",
+        "question": "Quels éléments distinguent une attitude scoliotique d'une scoliose ?",
+        "answer": "Absence de rotation et modification de la posture."
+      },
+      {
+        "id": "KZgcGbMEX2-o8o6ccvOxv",
+        "question": "Quelle recommandation est faite concernant le dépistage de la scoliose ?",
+        "answer": "Dépistage précoce pour un meilleur traitement."
+      },
+      {
+        "id": "BdAcQdS2B60MGRUe3soxo",
+        "question": "Quels sont les types de traitement pour la scoliose ?",
+        "answer": "Traitement orthopédique (corset) et chirurgical."
+      },
+      {
+        "id": "_dANNFQW0AmTmcBMAMz6e",
+        "question": "Quelle est la fonction de l'incidence pelvienne ?",
+        "answer": "Évaluée pour déterminer la lordose lombaire."
+      },
+      {
+        "id": "uFz5BU32H4S3tdj4WXus7",
+        "question": "Quelles sont les côtes flottantes dans le rachis dorsal ?",
+        "answer": "K11 et K12."
+      },
+      {
+        "id": "tI5pQA6c_nJ2WVcLlE1-s",
+        "question": "Quel est l'effet d'une pathologie cervicale basse sur le rachis cervical ?",
+        "answer": "Peut entraîner des douleurs cervicales compensatoires."
+      },
+      {
+        "id": "WMs4k43uRUoqk4v6PAOCz",
+        "question": "Pourquoi le traitement kinésithérapique est-il important dans la scoliose ?",
+        "answer": "Pour améliorer la mobilité et renforcer les muscles."
+      },
+      {
+        "id": "J09ms4vCCcMi3jqNlLBO1",
+        "question": "Quels mouvements sont principalement réalisés au niveau de la charnière T1 ?",
+        "answer": "La charnière T1 est impliquée dans la flexion et l'extension du rachis ainsi que la rotation cervicale."
+      },
+      {
+        "id": "UD9Mkn7IDKErbzWQWTob1",
+        "question": "Quel est le rôle des vertèbres dorsales ?",
+        "answer": "Les vertèbres dorsales (T1 à T12) sont responsables de la protection des organes thoraciques et de la stabilité du thorax."
+      },
+      {
+        "id": "k0aC7Yl04CUPm4CP8cDGx",
+        "question": "Quelle est la composition de l'angle de Cobb dans l'évaluation de la scoliose ?",
+        "answer": "L'angle de Cobb est mesuré entre les lignes tangentes aux vertèbres les plus inclinées de la courbure scoliotique."
+      },
+      {
+        "id": "5iEZWEireDkttGe-v6NtD",
+        "question": "Quels sont les signes cliniques d'une scoliose ?",
+        "answer": "Les signes incluent une asymétrie des épaules, des hanches, et une déviation du tronc par rapport à l'axe vertical."
+      },
+      {
+        "id": "VCMJqFPz7wtwQBG4t_RFY",
+        "question": "Quels sont les types de traitements orthopédiques pour la scoliose ?",
+        "answer": "Les traitements incluent le port de corsets et la surveillance régulière."
+      },
+      {
+        "id": "k4lFdcPTORLkEx5hdq3cx",
+        "question": "Quel est le rôle de l'incidence pelvienne dans le rachis lombaire ?",
+        "answer": "L'incidence pelvienne influence la lordose lombaire et la posture globale du rachis."
+      },
+      {
+        "id": "2JDpDwlQxqfS22Tg-A25-",
+        "question": "Quelles sont les causes possibles de la scoliose secondaire ?",
+        "answer": "Les causes peuvent inclure des malformations vertébrales, des paralysies, ou des maladies neuromusculaires."
+      },
+      {
+        "id": "PL50QafR0CitiPuUgSGmC",
+        "question": "Quels muscles sont principalement impliqués dans le soutien du rachis ?",
+        "answer": "Les muscles érecteurs du rachis, le grand dorsal, et le carré des lombes."
+      },
+      {
+        "id": "phFnDwB2YHNGxoorRVdES",
+        "question": "Quelle est la différence entre scoliose et attitude scoliotique ?",
+        "answer": "La scoliose est une déformation structurelle de la colonne, tandis que l'attitude scoliotique est une déviation posturale sans déformation osseuse permanente."
+      },
+      {
+        "id": "lEygHL52gMOa3B_2At9EY",
+        "question": "Quelles sont les recommandations de dépistage pour la scoliose chez les enfants ?",
+        "answer": "Le dépistage doit être effectué lors des consultations médicales régulières, particulièrement pendant les périodes de croissance."
+      },
+      {
+        "id": "jvePcovDdr6WEMFGEjTmI",
+        "question": "Quel est l'impact de la scoliose sur la fonction pulmonaire ?",
+        "answer": "La scoliose peut entraîner une diminution de la capacité respiratoire en raison de la déformation thoracique."
+      },
+      {
+        "id": "u9AqsRUWnPoU3riWnnnKv",
+        "question": "Quel angle d'installation des côtes flottantes est associé à quels vertèbres ?",
+        "answer": "Les côtes flottantes sont associées aux vertèbres T11 et T12."
+      },
+      {
+        "id": "Rgarbr406WpEATtvotgcj",
+        "question": "Quelle est la valeur normale de lordose entre L1 et le plateau sacré ?",
+        "answer": "L'angle de lordose entre L1 et le plateau sacré varie de 20 à 60°, avec une moyenne d'environ 50°."
+      },
+      {
+        "id": "8DlrNZhKlfSUSxr86j9c2",
+        "question": "Que doit-on évaluer lors du suivi d'une scoliose traitée par corset ?",
+        "answer": "Il faut évaluer l'efficacité du corset et surveiller l'évolution de l'angle de Cobb."
+      },
+      {
+        "id": "9zZheF1t25tj7Sj0ivhaR",
+        "question": "Quels sont les critères de gravité selon la classification de la scoliose ?",
+        "answer": "Les critères incluent la magnitude de la courbure, son évolution, et l'âge du patient."
+      },
+      {
+        "id": "Y0Wdrr8ELlHx2SqAXWvdH",
+        "question": "Quel rôle joue l'aponévrose cervicale dans la mobilité scapulaire ?",
+        "answer": "Elle relie les muscles interscapulaires aux vertèbres thoraciques, influençant ainsi la mobilité scapulaire."
+      },
+      {
+        "id": "5FVoX_4CnlubN6wYEBcGi",
+        "question": "Quel est l'objectif du traitement chirurgical dans les cas sévères de scoliose ?",
+        "answer": "Corriger la déformation scoliotique et stabiliser la colonne vertébrale."
+      },
+      {
+        "id": "ped9y0JCnyc3y51HV9n7C",
+        "question": "Quelle est la principale complication associée à une scoliose non traitée ?",
+        "answer": "Une progression de la déformation pouvant entraîner des complications cardiorespiratoires."
+      }
+    ],
+    "mcqs": [
+      {
+        "id": "i3UkWwqnet7zoOFkyoqrb",
+        "question": "Qu'est-ce que l'angle de Cobb mesure ?",
+        "options": [
+          "La courbure latérale du rachis",
+          "La lordose lombaire",
+          "L'incidence pelvienne",
+          "Le degré de flexibilité des vertèbres"
+        ],
+        "correctIndex": 0,
+        "explanation": "L'angle de Cobb est utilisé pour évaluer la déformation latérale du rachis."
+      },
+      {
+        "id": "mgHaMx0KRLAeB0VfcQprO",
+        "question": "Quel est le principal type de scoliose chez l'enfant ?",
+        "options": [
+          "Scoliose secondaire",
+          "Scoliose neurogène",
+          "Scoliose idiopathique",
+          "Scoliose dégénérative"
+        ],
+        "correctIndex": 2,
+        "explanation": "La scoliose idiopathique est la forme la plus courante chez les enfants."
+      },
+      {
+        "id": "VppC-ydiw7orCVLbP0rIL",
+        "question": "Quel muscle est le principal stabilisateur du rachis ?",
+        "options": [
+          "Grand dorsal",
+          "Carré des lombes",
+          "Ilio-psoas",
+          "Érecteurs du rachis"
+        ],
+        "correctIndex": 3,
+        "explanation": "Les érecteurs du rachis sont essentiels pour maintenir la stabilité du rachis."
+      },
+      {
+        "id": "kv_PttG5tN61jwmjro1p1",
+        "question": "Quelle vertèbre est le pivot de la mobilité cervicale ?",
+        "options": [
+          "T1",
+          "T4",
+          "T6",
+          "T12"
+        ],
+        "correctIndex": 1,
+        "explanation": "La vertèbre T4 est clé dans la mobilité cervicale."
+      },
+      {
+        "id": "HB_n8QI2kHrB7TCoOqpr8",
+        "question": "Quel est le rôle principal du rachis lombaire ?",
+        "options": [
+          "Protection des organes",
+          "Soutien du tronc",
+          "Mouvement rotatif",
+          "Stabilité du cou"
+        ],
+        "correctIndex": 1,
+        "explanation": "Le rachis lombaire supporte la majorité du poids du tronc et des viscères."
+      },
+      {
+        "id": "3UUVQmEYsz8PtW4FGop8R",
+        "question": "Quelles sont les côtes associées à la scoliose thoracique ?",
+        "options": [
+          "Côtes flottantes",
+          "Côtes sternales",
+          "Côtes asternales",
+          "Côtes fausses"
+        ],
+        "correctIndex": 0,
+        "explanation": "Les côtes flottantes (K11 et K12) sont souvent affectées par la scoliose."
+      },
+      {
+        "id": "dde3wbvu2MSaPbWDtxEig",
+        "question": "Quel est le traitement initial recommandé pour la scoliose ?",
+        "options": [
+          "Chirurgie",
+          "Corset orthopédique",
+          "Kinésithérapie",
+          "Médicaments"
+        ],
+        "correctIndex": 1,
+        "explanation": "Le corset orthopédique est souvent le premier pas dans le traitement."
+      },
+      {
+        "id": "nUFPZ4F1NTD7ePByzs8Hs",
+        "question": "Le dépistage de la scoliose est crucial pour lequel des éléments suivants ?",
+        "options": [
+          "Évaluer la douleur",
+          "Déterminer la nécessité chirurgicale",
+          "Prévenir l'aggravation",
+          "Ajuster la posture"
+        ],
+        "correctIndex": 2,
+        "explanation": "Un dépistage précoce est essentiel pour empêcher l'évolution de la scoliose."
+      },
+      {
+        "id": "4yVEfF7uP6Lvat2YBU37H",
+        "question": "Quel mouvement ne se produit pas dans le rachis cervical supérieur ?",
+        "options": [
+          "Rotation",
+          "Flexion",
+          "Extension",
+          "Lateralisation"
+        ],
+        "correctIndex": 3,
+        "explanation": "Le rachis cervical supérieur ne permet pas la lateralisation significative."
+      },
+      {
+        "id": "ToZDqCgHqbTOK_r9CAR7k",
+        "question": "Qu'est-ce qui peut influencer la lordose lombaire ?",
+        "options": [
+          "Position assise",
+          "Poids corporel",
+          "Incidence pelvienne",
+          "Tous les précédents"
+        ],
+        "correctIndex": 3,
+        "explanation": "Tous ces facteurs jouent un rôle dans la détermination de la lordose lombaire."
+      },
+      {
+        "id": "IEmubElyj5l_-O2N_Okeh",
+        "question": "Quel est l'effet d'une scoliose non traitée ?",
+        "options": [
+          "Aucun",
+          "Douleur chronique",
+          "Risque de chirurgie",
+          "Perte de mobilité"
+        ],
+        "correctIndex": 1,
+        "explanation": "Une scoliose non traitée peut entraîner des douleurs chroniques."
+      },
+      {
+        "id": "ajcPy9PWPA97E4h4mPfKg",
+        "question": "Quel groupe de muscles est essentiel pour la kinésithérapie de la scoliose ?",
+        "options": [
+          "Muscles des jambes",
+          "Muscles du cou",
+          "Muscles du dos",
+          "Muscles abdominaux"
+        ],
+        "correctIndex": 2,
+        "explanation": "Les muscles du dos sont essentiels pour corriger la posture."
+      },
+      {
+        "id": "S2fKaBk7ik5V39rEGECdd",
+        "question": "Quelle est la principale cause de scoliose secondaire ?",
+        "options": [
+          "Traumatisme",
+          "Mauvaise posture",
+          "Maladie neuromusculaire",
+          "Idiopathique"
+        ],
+        "correctIndex": 2,
+        "explanation": "Les maladies neuromusculaires peuvent provoquer une scoliose secondaire."
+      },
+      {
+        "id": "o6q0iVqd1cF-mh_X7Zoph",
+        "question": "Quelle structure est affectée par des déformations au niveau T11 et T12 ?",
+        "options": [
+          "Ceinture scapulaire",
+          "Ceinture pelvienne",
+          "Rachis cervical",
+          "Rachis lombaire"
+        ],
+        "correctIndex": 1,
+        "explanation": "T11 et T12 sont des charnières influençant la ceinture pelvienne."
+      },
+      {
+        "id": "TlFWhBFyQnDBSQB1aHOME",
+        "question": "Quel est le rôle de la kinésithérapie dans le traitement de la scoliose ?",
+        "options": [
+          "Chirurgical",
+          "Préventif",
+          "Réducteur de douleur",
+          "Réhabilitation",
+          "Renforcement musculaire"
+        ],
+        "correctIndex": 4,
+        "explanation": "La kinésithérapie vise à renforcer les muscles soutenant la colonne vertébrale."
+      },
+      {
+        "id": "fBrxNlVHUj7w8UOU5BkFb",
+        "question": "Quel traitement est proposé pour une scoliose sévère ?",
+        "options": [
+          "Corset",
+          "Exercices",
+          "Chirurgie",
+          "Anti-inflammatoires"
+        ],
+        "correctIndex": 2,
+        "explanation": "Pour une scoliose sévère, la chirurgie est souvent nécessaire."
+      },
+      {
+        "id": "ouvMoAfuqoOiQdT3Nmygp",
+        "question": "Quelle posture est souvent modifiée par une scoliose ?",
+        "options": [
+          "Debout",
+          "Assise",
+          "Couchée",
+          "En mouvement"
+        ],
+        "correctIndex": 0,
+        "explanation": "La scoliose modifie fréquemment la posture debout."
+      },
+      {
+        "id": "ao3uoiAZmLlItiXMwViEz",
+        "question": "Quel traitement initial est souvent recommandé pour la scoliose modérée ?",
+        "options": [
+          "Actif",
+          "Chirurgical",
+          "Référé",
+          "Passif"
+        ],
+        "correctIndex": 0,
+        "explanation": "Les traitements actifs sont privilégiés pour la scoliose modérée."
+      },
+      {
+        "id": "Q8Pu9zpPrwR3Npc1RZLKX",
+        "question": "Quel est l'impact d'une scoliose sur la qualité de vie ?",
+        "options": [
+          "Aucun",
+          "Slightly better",
+          "Lower confidence",
+          "Improved mobility"
+        ],
+        "correctIndex": 2,
+        "explanation": "Une scoliose peut affecter négativement la confiance et la qualité de vie."
+      },
+      {
+        "id": "oLUcs_2MjCCZC_zWDdP2_",
+        "question": "Quelle est la principale caractéristique de la scoliose idiopathique ?",
+        "options": [
+          "Elle survient après un traumatisme",
+          "Elle est causée par une malformation congénitale",
+          "Sa cause est inconnue",
+          "Elle se manifeste uniquement à l'âge adulte",
+          "Elle est associée à une fracture vertébrale"
+        ],
+        "correctIndex": 2,
+        "explanation": "La scoliose idiopathique est définie par l'absence de cause identifiable, d'où le terme 'idiopathique'. Elle est souvent observée chez les adolescents."
+      }
+    ],
+    "plan7d": [
+      "Revoir les définitions clés de la scoliose.",
+      "Faire 10 cartes supplémentaires sur les étiologies.",
+      "Revoir les traitements orthopédiques et chirurgicaux.",
+      "Réviser l'anatomie des vertèbres et leur rôle.",
+      "Faire un QCM sur le dépistage de la scoliose.",
+      "Discuter de la kinésithérapie en groupe.",
+      "Faire un résumé des conséquences de la scoliose."
+    ]
+  },
+  {
+    "id": "vnbgl3as3SqXMfOo0UPyj",
+    "title": "Deck sur le Syndrome du Défilé Thoraco-Brachial",
+    "createdAt": 1767976711550,
+    "level": "PASS",
+    "cards": [
+      {
+        "id": "LZuPhKGKgesWj_VxLxnOR",
+        "question": "Qu'est-ce que le syndrome du défilé thoraco-brachial ?",
+        "answer": "C'est une compression du plexus brachial et de l'artère/veine subclavière dans le passage thoraco-brachial."
+      },
+      {
+        "id": "XBWUXEg43STX3BLcPzRcQ",
+        "question": "Quels sont les symptômes typiques du syndrome du défilé thoraco-brachial ?",
+        "answer": "Douleur paresthésique, lourdeur dans le membre supérieur, aggravée par l'élévation du bras et certains mouvements."
+      },
+      {
+        "id": "L1vfBIMQoEX-Ex3a4E0qq",
+        "question": "Quels sont les types de défilé thoraco-brachial ?",
+        "answer": "1) Défilé scalénique, 2) scapulo-costal, 3) petite pectoral, 4) costo-claviculaire, 5) billot huméral, 6) appareil suspenseur de la plèvre."
+      },
+      {
+        "id": "cG1Yq48ing30IPTitRdwE",
+        "question": "Quelle est l'incidence du syndrome du défilé thoraco-brachial dans la population ?",
+        "answer": "Il a une incidence de 8% avec un ratio de 4 femmes pour 1 homme à 2 femmes pour 1 homme."
+      },
+      {
+        "id": "viP7XnecdIg-AhwhtxKrl",
+        "question": "Comment se manifeste le défilé vasculaire ?",
+        "answer": "Divisé en deux sous-catégories : artériel (aTOS) et veineux (vTOS)."
+      },
+      {
+        "id": "xzQ6jtR1dip7M6GljCQll",
+        "question": "Quels sont les principaux antécédents à rechercher lors de l'interrogatoire ?",
+        "answer": "Âge, sport, bras dominant, métier, type de symptômes, date et durée d'apparition."
+      },
+      {
+        "id": "yaiSqAc44V_bEtN29ZsO9",
+        "question": "Quelle est la différence entre les symptômes neurogènes et vasculaires ?",
+        "answer": "Les symptômes neurogènes concernent des douleurs nerveuses, tandis que les vasculaires impliquent des douleurs dues à une réduction du flux sanguin."
+      },
+      {
+        "id": "3yrwD5-mhyi-A1gWE0HmM",
+        "question": "Quels mouvements aggravent souvent les symptômes du syndrome du défilé ?",
+        "answer": "Élévation des bras et mouvements de la tête et du cou."
+      },
+      {
+        "id": "pZk9JoA5uvIJsCaz8qh2n",
+        "question": "Quelle est la prévalence du défilé thoraco-brachial bilatéral ?",
+        "answer": "Environ 25% des cas présentent une forme bilatérale."
+      },
+      {
+        "id": "XffDjusLarWwVcloQkIGn",
+        "question": "Quelles sont les étiologies possibles du syndrome du défilé ?",
+        "answer": "Traumatismes, anomalies congénitales, postures inadéquates, problèmes respiratoires."
+      },
+      {
+        "id": "8ShcJf7jQwveOIJafXnxv",
+        "question": "Comment se déroule le bilan clinique dans le syndrome du défilé ?",
+        "answer": "Il commence par un interrogatoire et se poursuit par des bilans visuels, palpatoires, articulaires, vasculaires, neurologiques et fonctionnels."
+      },
+      {
+        "id": "cCIqkbjUDbn-db2W1EgPi",
+        "question": "Quel est l'impact des activités sportives sur le syndrome du défilé ?",
+        "answer": "Certaines activités (comme l'escalade) exigent une force importante des bras, pouvant entraîner une compression du paquet vasculo-nerveux."
+      },
+      {
+        "id": "n4kNG9OHXf2w0sXj-Ye7f",
+        "question": "Quelle conduite à tenir face à une douleur unilatérale lors de l'examen clinique ?",
+        "answer": "Orienter vers un examen plus approfondi pour déterminer si la douleur est d'origine neurogène ou vasculaire."
+      },
+      {
+        "id": "wo-OpG3VmgfB_WpnCfkEn",
+        "question": "Quels tests spécifiques sont utilisés pour le diagnostic du TOS ?",
+        "answer": "Tests d'Adson, de Wright, et d'autres évaluant la fonction du plexus brachial."
+      },
+      {
+        "id": "juW8CXz6gnGAnMmMTZSGm",
+        "question": "Quel traitement est recommandé pour le défilé costoclaviculaire ?",
+        "answer": "Traitements physiques et corrections posturales, voire chirurgie dans certains cas."
+      },
+      {
+        "id": "C9jr6QfCHBxuYVmS6Mb5y",
+        "question": "Comment évaluer la fonction neurologique dans le cadre du TOS ?",
+        "answer": "En testant la sensibilité, la force musculaire et les réflexes du membre supérieur."
+      },
+      {
+        "id": "ELS2ULT5lPLEvvpEIXKuD",
+        "question": "Qu'est-ce qui est souvent impliqué dans le défilé du petit pectoral ?",
+        "answer": "Compression du paquet vasculo-nerveux sous le petit pectoral."
+      },
+      {
+        "id": "LOlFnh6vToR5X1FYsaDbF",
+        "question": "Comment se manifeste la douleur dans le défilé scapulo-costal ?",
+        "answer": "Elle est souvent localisée entre la scapula et les côtes."
+      },
+      {
+        "id": "JUZIoBZEkFExWSYTB4p__",
+        "question": "Quels sont les objectifs du traitement du syndrome du défilé ?",
+        "answer": "Réduction de la douleur, amélioration de la fonction, et prévention des récidives."
+      },
+      {
+        "id": "v_1zsBtqWh7_lwphK-zjv",
+        "question": "Quel est le rôle de la rééducation dans le syndrome du défilé ?",
+        "answer": "Elle aide à renforcer les muscles, améliorer la posture et la mobilité."
+      },
+      {
+        "id": "xd7QcvRV9FKFlgC09c_-T",
+        "question": "Quelles techniques de mobilisation nerveuse peuvent être utilisées ?",
+        "answer": "Mobilisations spécifiques pour réduire la tension autour des structures nerveuses."
+      },
+      {
+        "id": "sfUiN8zpAhA5ItiG7e58x",
+        "question": "Quelle est la première étape dans la prise en charge du syndrome du défilé ?",
+        "answer": "Une évaluation clinique complète pour déterminer le type de défilé et les symptômes associés."
+      },
+      {
+        "id": "L1FzY6WW1zo676FKaFK4g",
+        "question": "Quels sont les éléments à rechercher lors du bilan vasculaire ?",
+        "answer": "Palpation des artères, recherche de signes d'ischémie, évaluation de la coloration des membres."
+      },
+      {
+        "id": "_a4wx9163x4S-TFbAK_w_",
+        "question": "Quelle est la différence entre le défilé tardif et précoce ?",
+        "answer": "Le défilé précoce présente des symptômes d'apparition rapide après un événement, tandis que le tardif est lié à des facteurs chroniques."
+      },
+      {
+        "id": "beAv7uIjXhKPROHmhTAqP",
+        "question": "Quelles sont les complications possibles du syndrome du défilé ?",
+        "answer": "Ischémie, atrophie musculaire, ou déformation du membre supérieur."
+      },
+      {
+        "id": "ndfQsBfruAK6IXvsCea0s",
+        "question": "Dans quel cas envisager une intervention chirurgicale pour le TOS ?",
+        "answer": "Lorsqu'il y a échec des traitements conservateurs après plusieurs mois."
+      },
+      {
+        "id": "HtTmRCYDC_VZSXOFF91Ah",
+        "question": "Quelles sont les mesures préventives à recommander aux patients ?",
+        "answer": "Éducation sur la posture, éviter les positions prolongées de compression et exercices de renforcement."
+      },
+      {
+        "id": "Dj9PqzcQOnR_kGniIRLNw",
+        "question": "Quelle équipe pluridisciplinaire est souvent impliquée dans la prise en charge du TOS ?",
+        "answer": "Médecins, kinésithérapeutes, ergothérapeutes et éventuellement chirurgiens."
+      },
+      {
+        "id": "WDuYcbpeQAZpwCnLsqds7",
+        "question": "Quel outil peut aider à objectiver la douleur dans le TOS ?",
+        "answer": "L'échelle visuelle analogique (EVA) pour évaluer l'intensité de la douleur."
+      },
+      {
+        "id": "V61eZeQhlg3CFRtigml_X",
+        "question": "Comment évaluer la mobilité du membre supérieur dans le cadre du TOS ?",
+        "answer": "Par des tests de mobilité active et passive, en vérifiant les amplitudes articulaires."
+      },
+      {
+        "id": "YTpzvPmZbhtOOBZ6YU0ys",
+        "question": "Qu'est-ce que le second impact dans le cadre du syndrome du défilé ?",
+        "answer": "C'est l'aggravation des symptômes après un premier épisode, souvent due à une sollicitation excessive."
+      },
+      {
+        "id": "wWbsG1_2q1rSurarQiGZM",
+        "question": "Quelle est l'importance d'une approche fonctionnelle dans la réhabilitation du TOS ?",
+        "answer": "Elle permet de retrouver des mouvements quotidiens sans douleur et d'améliorer la qualité de vie."
+      },
+      {
+        "id": "aokMol3bJ0gwUoL9G0Hpi",
+        "question": "Quels sont les critères diagnostics pour le défilé vasculaire ?",
+        "answer": "1. Douleur à l'effort au membre supérieur\n2. Paresthésies (engourdissements) dans les doigts \n3. Signes de déficit circulatoire (froideur, pâleur)\n4. Absence de pouls au niveau radial ou ulnaire lors de certaines positions."
+      },
+      {
+        "id": "NnJLHn8K3i5KiOyBdmBal",
+        "question": "Quel est le rôle des examens complémentaires dans le diagnostic du syndrome du défilé ?",
+        "answer": "Les examens complémentaires permettent d'objectiver la compression:\n- Échographie Doppler : évaluation de la circulation sanguine.\n- IRM : analyse des structures osseuses et des tissus mous.\n- Électromyogramme : évaluation de l'état des nerfs."
+      },
+      {
+        "id": "Y1rJKBGXhxLz29bZ_nYni",
+        "question": "Quelles corrections posturales sont indiquées dans le traitement du syndrome du défilé ?",
+        "answer": "1. Correction de la position des épaules (réduire l'enroulement avant).\n2. Amélioration de la posture cervicale (alignement tête/colonne).\n3. Techniques de décontraction musculaire dans la région thoraco-brachiale."
+      }
+    ],
+    "mcqs": [
+      {
+        "id": "8qx6AmQFYHh_DF_aj9l4m",
+        "question": "Quel est le principal symptôme du syndrome du défilé thoraco-brachial ?",
+        "options": [
+          "Douleur thoracique",
+          "Paresthésie",
+          "Engourdissement",
+          "Faiblesse musculaire"
+        ],
+        "correctIndex": 1,
+        "explanation": "La paresthésie est le symptôme typique signalant une oppression nerveuse."
+      },
+      {
+        "id": "GLANUZLB1ZXn8LPY8wtVE",
+        "question": "Quelle est la principale étiologie du TOS ?",
+        "options": [
+          "Traumatismes",
+          "Infections",
+          "Tumeurs",
+          "Fractures"
+        ],
+        "correctIndex": 0,
+        "explanation": "Les traumatismes, même de faible intensité, sont souvent à l'origine du syndrome."
+      },
+      {
+        "id": "hGCyYcb8JcgvGBUijGFrv",
+        "question": "Quel test est utilisé pour évaluer le syndrome du défilé ?",
+        "options": [
+          "Test d'Adson",
+          "Test de Smith",
+          "Test de McMurray",
+          "Test de Lachman"
+        ],
+        "correctIndex": 0,
+        "explanation": "Le test d'Adson est spécifique pour évaluer les compressions dans le TOS."
+      },
+      {
+        "id": "-r6dvj1ncGSOhje_wVkR6",
+        "question": "Quel traitement est le plus couramment proposé en première intention ?",
+        "options": [
+          "Chirurgie",
+          "Kinésithérapie",
+          "Médicaments",
+          "Corticoïdes"
+        ],
+        "correctIndex": 1,
+        "explanation": "La kinésithérapie est le traitement de première intention pour le TOS."
+      },
+      {
+        "id": "RMIZmFdzzA7BVJFl_7ugR",
+        "question": "Quelle population est la plus touchée par le syndrome du défilé ?",
+        "options": [
+          "Les enfants",
+          "Les jeunes adultes",
+          "Les seniors",
+          "Les femmes"
+        ],
+        "correctIndex": 3,
+        "explanation": "Les femmes sont plus souvent atteintes, surtout entre 20 et 40 ans."
+      },
+      {
+        "id": "JjYNS5tO2qUxW9TzLsxYd",
+        "question": "Quelle est l'une des complications possibles du TOS ?",
+        "options": [
+          "Hypertension",
+          "Atrophie musculaire",
+          "Diabète",
+          "Asthme"
+        ],
+        "correctIndex": 1,
+        "explanation": "L'atrophie musculaire peut survenir en raison de la compression nerveuse."
+      },
+      {
+        "id": "OuZtAGiSwn6oImlY7Ze-x",
+        "question": "Quel est le rôle principal de la réhabilitation dans le TOS ?",
+        "options": [
+          "Réduire la douleur",
+          "Rétablir une posture correcte",
+          "Récupérer des amplitudes articulaires",
+          "Tous les précédents"
+        ],
+        "correctIndex": 3,
+        "explanation": "La réhabilitation vise plusieurs objectifs clés dans la prise en charge du TOS."
+      },
+      {
+        "id": "HwHGVHBWeq0_UXEwgtVxE",
+        "question": "Quel type de défilé est le plus courant ?",
+        "options": [
+          "Défilé vasculaire",
+          "Défilé neurogène",
+          "Défilé symptomatique",
+          "Défilé combiné"
+        ],
+        "correctIndex": 1,
+        "explanation": "Le défilé neurogène (TOS) est le plus fréquemment rencontré."
+      },
+      {
+        "id": "J5P4dwsgCJgKH1DoDE36L",
+        "question": "Quelle mesure préventive peut réduire le risque de TOS ?",
+        "options": [
+          "Manipulation",
+          "Chirurgie",
+          "Éducation posturale",
+          "Antibiotiques"
+        ],
+        "correctIndex": 2,
+        "explanation": "Une éducation sur la posture aide à prévenir l'apparition des symptômes."
+      },
+      {
+        "id": "VOOpD74pBweGyZ6AYGcRc",
+        "question": "Dans quelle situation envisager une intervention chirurgicale ?",
+        "options": [
+          "Après 1 mois de traitement",
+          "Après 3 mois sans amélioration",
+          "Dès le diagnostic",
+          "À tout moment"
+        ],
+        "correctIndex": 1,
+        "explanation": "Une chirurgie est envisagée si les traitements conservateurs échouent après plusieurs mois."
+      }
+    ],
+    "plan7d": [
+      "Revoir l'anatomie du plexus brachial.",
+      "Faire 10 cartes sur les étiologies du TOS.",
+      "Refaire le QCM sur le traitement du TOS.",
+      "Étudier les tests cliniques spécifiques pour le TOS.",
+      "Expliquer le bilan neurologique en détail.",
+      "Réviser les complications possibles du TOS.",
+      "Regarder des vidéos sur les techniques de réhabilitation."
+    ]
+  },
+  {
+    "id": "iqzC3y-7hpznkb7BQmfMJ",
+    "title": "Pathologies Maxillo-Faciales - UE19",
+    "createdAt": 1767969993846,
+    "level": "EDN_ECOS",
+    "cards": [
+      {
+        "id": "NZfiuPx1Wo_aVP-by5arv",
+        "question": "Quelles sont les articulations temporo-mandibulaires ?",
+        "answer": "Ce sont des articulations bicondylaires, synchrones et synoviales."
+      },
+      {
+        "id": "CaUnK1n6S0I8nknneB_dM",
+        "question": "Quel est le rôle principal des articulations temporo-mandibulaires ?",
+        "answer": "Manducation, phonation, respiration."
+      },
+      {
+        "id": "HW6p_6NGnVSCjt34PsV33",
+        "question": "Quel est le diagnostic clinique du Dérangement Temporo-Mandibulaire (DTM) ?",
+        "answer": "Il demande un bilan kinésithérapique et l'utilisation de l'IRM."
+      },
+      {
+        "id": "7UN6_Bt_Plf_l0Xh9y5S2",
+        "question": "Quels sont les grades du DTM selon Dr Giraudeau ?",
+        "answer": "Grade I : désunion condylo-discale partielle, Grade II : totale avec réunion, Grade III : totale sans réunion, Grade IV : arthrose."
+      },
+      {
+        "id": "nMLh1g1amwscSJS0L38p1",
+        "question": "Quels sont les facteurs étiologiques du DTM ?",
+        "answer": "Bruxisme, facteurs psychologiques, malocclusion, fatigue, douleur dentaire."
+      },
+      {
+        "id": "J0kDg6ZVw8O4Ga7_IRW1g",
+        "question": "Quelle est la prise en charge médicale des DTM ?",
+        "answer": "Repositionnement du disque, décompression de l'articulation."
+      },
+      {
+        "id": "2qwZq7-xbgX18s7o2WBbX",
+        "question": "Quel est le GOLD STANDARD pour le diagnostic du DTM ?",
+        "answer": "L'IRM."
+      },
+      {
+        "id": "4pReg4TQ9ki0CBKnSfSj8",
+        "question": "Quelles sont les principales complications à court terme des Troubles Respiratoires Obstructifs du Sommeil (TROS) ?",
+        "answer": "Hypoxie tissulaire, fatigue chronique, somnolence diurne."
+      },
+      {
+        "id": "Muz5kPZGsl1zf8zqSn6fo",
+        "question": "Quelles sont les manifestations classiques d'une apnée du sommeil ?",
+        "answer": "Pause respiratoire et diminution du flux respiratoire."
+      },
+      {
+        "id": "L3yY3V7oyPPNTHh7nWywC",
+        "question": "Quels sont les objectifs à long terme de la rééducation des DTM ?",
+        "answer": "Pérenniser le résultat, inclure une prise en charge pluridisciplinaire."
+      },
+      {
+        "id": "8Y047ijvVl1BbqXIm982a",
+        "question": "Quels muscles sont impliqués dans l'ouverture de la bouche ?",
+        "answer": "Muscles pterygoidiens latéraux et temporaux."
+      },
+      {
+        "id": "aoSR9je4Dtn16qiC_Azja",
+        "question": "Quel diagnostic complémentaire est souvent peu utile pour le DTM ?",
+        "answer": "Le panoramique dentaire."
+      },
+      {
+        "id": "7IDFSyvCcVTNNb3PaYZny",
+        "question": "Quelle échelle n'est pas validée en France pour la dysfonction temporo-mandibulaire ?",
+        "answer": "L'échelle HELKIMO."
+      },
+      {
+        "id": "9LI62Vick1ykNpA0AxPhc",
+        "question": "Quels sont les éléments à évaluer lors du bilan kinésithérapique pour le DTM ?",
+        "answer": "Douleur, anamnèse, imagerie, bilans articulaires et palpatoires."
+      },
+      {
+        "id": "Alni22BOIvp-LCx4wdErk",
+        "question": "Pourquoi est-il important d'évaluer l'état psychique d'un patient avec DTM ?",
+        "answer": "Car des troubles psychologiques peuvent être à l'origine du DTM."
+      },
+      {
+        "id": "T8FoekodQl6xpyE9hhbqg",
+        "question": "Quel traitement peut être envisagé pour réduire le craquement lors des DTM ?",
+        "answer": "Éducation thérapeutique du patient."
+      },
+      {
+        "id": "OqR3V2aFk_5DS5XLmT-sC",
+        "question": "Quels sont les mouvements réalisés par les articulations temporo-mandibulaires ?",
+        "answer": "Ouverture/fermeture, propulsion/rétropulsion, diduction."
+      },
+      {
+        "id": "EzUj85JK__ybSfSGhwCgn",
+        "question": "Quels sont les symptômes associés aux cervicalgies chez des patients ayant un DTM ?",
+        "answer": "Douleurs cervicales sans données scientifiques concluantes affirmant une association."
+      },
+      {
+        "id": "4nH_8vjWyvTWCOUPpQWye",
+        "question": "Quels tests d'imagerie sont à privilégier pour le DTM ?",
+        "answer": "IRM et cone beam."
+      },
+      {
+        "id": "8r36Ktxcs-pkwKMwAPIWb",
+        "question": "Comment se définit l'apnée du sommeil dans les TROS ?",
+        "answer": "Pause respiratoire pendant le sommeil."
+      },
+      {
+        "id": "3T4bKv1UzJSdlEFR_i-bg",
+        "question": "Quel est le pourcentage de la population adulte touchée par le SAHOS ?",
+        "answer": "4% des hommes et 2% des femmes."
+      },
+      {
+        "id": "jKXE_K_OoVxvt5TUAqXp9",
+        "question": "Quels sont les risques à moyen terme associés aux TROS ?",
+        "answer": "Fatigue chronique, diminution de la vigilance."
+      },
+      {
+        "id": "xeWSogJxADTlfmkVU2DGY",
+        "question": "Quel est l'effet des Troubles Respiratoires Obstructifs sur les maladies cardiovasculaires ?",
+        "answer": "Augmentation du risque de maladies cardiovasculaires."
+      },
+      {
+        "id": "M8Ty31Db0_BCd_C9Pj30E",
+        "question": "Comment se manifeste l'affaissement musculaire dans les TROS ?",
+        "answer": "Obstruction du passage de l'air due à un affaissement excessif."
+      },
+      {
+        "id": "DPkGtFm1vgYMhAXLX4eB4",
+        "question": "Quel est le premier objectif lors de la rééducation du DTM ?",
+        "answer": "Diminuer la symptomatologie."
+      },
+      {
+        "id": "ivJnsf44We1RGssEOe-6c",
+        "question": "Quel type de douleur est typiquement évalué lors du bilan musculaire pour le DTM ?",
+        "answer": "Douleur musculaire, spasmes, contractures."
+      },
+      {
+        "id": "T-XrcKb_-rteFSPk9rUGz",
+        "question": "Quelles structures sont stabilisées par les ligaments méniscaux ?",
+        "answer": "Le disque articulaire dans l'articulation temporo-mandibulaire."
+      },
+      {
+        "id": "wVqTsndozxxfcPZP34YZt",
+        "question": "Quels traitements sont proposés à long terme pour les DTM ?",
+        "answer": "Correction posturale et prise en charge pluridisciplinaire."
+      },
+      {
+        "id": "pymdoC2E3c2aD3kEwEal0",
+        "question": "Quelles douleurs sont souvent concomitantes à un DTM ?",
+        "answer": "Douleurs dentaires, cervicales, migraines."
+      },
+      {
+        "id": "BHTN5u6fjtQZlHyFf-xFT",
+        "question": "Quel est le traitement de choix pour les TROS ?",
+        "answer": "Traitements médicaux et kinésithérapiques."
+      },
+      {
+        "id": "UdfuW-34Xa-UKw1QBnlQ9",
+        "question": "Quelle est la première démarche en cas de suspicion de TROS ?",
+        "answer": "Dépistage des apnées du sommeil."
+      },
+      {
+        "id": "mlK3fGpB6uv2UmBDZUBlN",
+        "question": "Quelles sont les deux principales procédures d'imagerie dans le bilan DTM ?",
+        "answer": "IRM et scanner."
+      },
+      {
+        "id": "-Dp6URDuO0o_g4OWSAsIK",
+        "question": "Quel est le but principal de la rééducation des DTM ?",
+        "answer": "Décomprimer l'articulation temporo-mandibulaire."
+      },
+      {
+        "id": "QoGDJe_GXvbk0PjSyLqo9",
+        "question": "Qu'est-ce que le bruxisme et son effet sur DTM ?",
+        "answer": "Serrage des dents; contribue à la fermeture et à la douleur."
+      },
+      {
+        "id": "1wfjUTkiEPyjB3tvmR7en",
+        "question": "Quel facteur psychologique contribue aux DTM ?",
+        "answer": "Stress et anxiété."
+      },
+      {
+        "id": "v3t-teU4de4Z03d_uh-o2",
+        "question": "Quels muscles sont responsables de l'ouverture et de la fermeture de la bouche ?",
+        "answer": "Muscles ptérygoidiens et temporaux."
+      },
+      {
+        "id": "aPoj1050aJw8JpZsyI2ho",
+        "question": "Quel mécanisme entraîne la douleur dans le DTM ?",
+        "answer": "Augmentation de la pression dans l'articulation."
+      },
+      {
+        "id": "8X0N-JP_EA6Fif74-Ihqb",
+        "question": "Quels signes permettent de diagnostiquer un DTM ?",
+        "answer": "Limitations du mouvement, bruits articulaires, douleurs."
+      },
+      {
+        "id": "Jp9Ml9kFJlulh6s6zCOI3",
+        "question": "Quelle est la cause de l'antéversion du disque dans un DTM ?",
+        "answer": "Manque de solidarisation entre le disque et le condyle."
+      },
+      {
+        "id": "Fv8DdKm0M0GHMq5xMZ5HW",
+        "question": "Quelle mesure est essentielle lors du bilan kinésithérapique ?",
+        "answer": "Mesure de l'ouverture buccale."
+      }
+    ],
+    "mcqs": [
+      {
+        "id": "JTHLIsUQaQ8m1Nxbr7jqY",
+        "question": "Quel est le bilan d'imagerie de référence pour le DTM ?",
+        "options": [
+          "Panoramique dentaire",
+          "CT Scan",
+          "IRM",
+          "Radiographie standard"
+        ],
+        "correctIndex": 2,
+        "explanation": "L'IRM est le GOLD STANDARD pour visualiser les structures articulaires."
+      },
+      {
+        "id": "mDxpCvahs7BBpQ6sAJLiJ",
+        "question": "Quel grade du DTM se caractérise par une désunion condylo-discale totale sans réunion ?",
+        "options": [
+          "Grade I",
+          "Grade II",
+          "Grade III",
+          "Grade IV"
+        ],
+        "correctIndex": 2,
+        "explanation": "Le Grade III indique une désunion totale sans réunion lors de l'ouverture."
+      },
+      {
+        "id": "jxTKMUsE4lAfPG-QS1Y3d",
+        "question": "Quels sont les principaux symptômes associés aux TROS ?",
+        "options": [
+          "Fatigue",
+          "Douleur thoracique",
+          "Diminution de l'appétit",
+          "Migraines fréquentes"
+        ],
+        "correctIndex": 0,
+        "explanation": "La fatigue est un symptôme classique des Troubles Respiratoires Obstructifs du Sommeil."
+      },
+      {
+        "id": "viVbuNNPuSJa-SOvHcekd",
+        "question": "Quel muscle est principalement actif lors de l'ouverture de la mâchoire ?",
+        "options": [
+          "Masséter",
+          "Temporal",
+          "Ptérygoïdien latéral",
+          "Ptérygoïdien médial"
+        ],
+        "correctIndex": 2,
+        "explanation": "Le muscle ptérygoïdien latéral est fondamental pour l'ouverture de la mâchoire."
+      },
+      {
+        "id": "0KWGZs3kHt7NU1oEu9dN-",
+        "question": "Quel est un facteur psychologique pouvant conduire à un DTM ?",
+        "options": [
+          "Anxiété",
+          "Anémie",
+          "Asthme",
+          "Syndrome dépressif"
+        ],
+        "correctIndex": 0,
+        "explanation": "L'anxiété est un facteur souvent associé au DTM."
+      },
+      {
+        "id": "w_wOk9VL6m17XLu24PmI9",
+        "question": "Quel est le premier objectif de la rééducation pour le DTM ?",
+        "options": [
+          "Restaurer la fonction complète",
+          "Diminuer la douleur",
+          "Augmenter la force musculaire",
+          "Améliorer la posture"
+        ],
+        "correctIndex": 1,
+        "explanation": "Diminuer la douleur est primordial pour le patient."
+      },
+      {
+        "id": "dc3YAgMFFJhXgYKFJu-Gs",
+        "question": "Quelle méthode est utilisée pour le dépistage des apnées du sommeil ?",
+        "options": [
+          "Polysomnographie",
+          "IRM",
+          "Scanner",
+          "Radiographie"
+        ],
+        "correctIndex": 0,
+        "explanation": "La polysomnographie est l'examen de référence pour le dépistage des apnées du sommeil."
+      },
+      {
+        "id": "xdDytMKluKRpxfBQf0K1a",
+        "question": "Quel est l'effet d'un bruxisme sur les articulations temporo-mandibulaires ?",
+        "options": [
+          "Dégénération rapide",
+          "Aucun effet",
+          "Réduction de l'impact",
+          "Douleur et tension"
+        ],
+        "correctIndex": 3,
+        "explanation": "Le bruxisme contribue à la douleur et à la tension musculaire au niveau des ATM."
+      },
+      {
+        "id": "VVALWFH3JCxZ9YB8HTpJk",
+        "question": "Quel traitement physique est recommandé pour les DTM ?",
+        "options": [
+          "Chirurgie immédiate",
+          "Acupuncture",
+          "Kinésithérapie",
+          "Aucune intervention"
+        ],
+        "correctIndex": 2,
+        "explanation": "La kinésithérapie est essentielle dans la prise en charge des DTM."
+      },
+      {
+        "id": "P2lnx3iXzA1XKCMRMytJN",
+        "question": "Quel mouvement est effectué par les muscles de la mastication lors de l'ouverture de la bouche ?",
+        "options": [
+          "Propulsion",
+          "Rétropulsion",
+          "Rotation",
+          "Compression"
+        ],
+        "correctIndex": 2,
+        "explanation": "L'ouverture implique une rotation au niveau du condyle dans l'ATM."
+      }
+    ],
+    "plan7d": [
+      "Revoir les étiologies des DTM.",
+      "Faire 10 flashcards sur le diagnostic du DTM.",
+      "Revisiter la physiopathologie des TROS.",
+      "Faire un tableau récapitulatif des grades du DTM.",
+      "Préparer une séance de révisions sur la rééducation des DTM.",
+      "Revoir les données épidémiologiques des TROS.",
+      "Faire des QCM sur les complications du DTM."
+    ]
+  },
+  {
+    "id": "ItZgkHMqTUrmn8N2FtXPg",
+    "title": "Syndrome du Défilé Thoraco-Brachial (TOS)",
+    "createdAt": 1767905796506,
+    "level": "PASS",
+    "cards": [
+      {
+        "id": "DbIuD5u3wIAToKswd4eSM",
+        "question": "Quelle est la définition du syndrome du défilé thoraco-brachial ?",
+        "answer": "Compression du plexus brachial et/ou de l'artère et veine subclavière dans le passage thoraco-brachial."
+      },
+      {
+        "id": "ls3_Yf3eJNBKiyFDA4jT1",
+        "question": "Quels sont les principaux symptômes du syndrome du défilé thoraco-brachial ?",
+        "answer": "Douleur de type paresthésique, lourdeur dans le membre supérieur, aggravée par l'élévation du bras."
+      },
+      {
+        "id": "fdTD402tJEP8r8wyrMLG3",
+        "question": "Quels sont les types de défilé identifiés dans la littérature ?",
+        "answer": "1. Défilé scalénique 2. Défilé scapulo-costal 3. Compression du petit pectoral 4. Pince costo-claviculaire 5. Syndrome du billot huméral 6. Défilé de l'appareil suspenseur de la plèvre."
+      },
+      {
+        "id": "TBL-LmY1b_dqH4BXKn-Zh",
+        "question": "Quelle est la prévalence du syndrome du défilé thoraco-brachial dans la population ?",
+        "answer": "8% de la population, avec un ratio de 4 femmes pour 1 homme à 2 femmes pour 1 homme."
+      },
+      {
+        "id": "60Ai6VeBgAst0fKdUg3YY",
+        "question": "Quelles sont les étiologies possibles du syndrome du défilé thoraco-brachial ?",
+        "answer": "Traumatismes, anomalies congénitales, postures prolongées, problèmes respiratoires, occupations demandant une force importante des bras."
+      },
+      {
+        "id": "snki8rkyj_OrHAcH2a-1H",
+        "question": "Quels sont les critères cliniques d'un défilé neurogène ?",
+        "answer": "Symptômes neurologiques clairs comme des douleurs irradiantes, engourdissements, et facteurs aggravants liés aux mouvements du bras."
+      },
+      {
+        "id": "wHhPGQUTwA6CWypVqYZte",
+        "question": "Quelle est la conduite à tenir face à une suspicion de syndrome du défilé thoraco-brachial ?",
+        "answer": "Évaluer les antécédents, réaliser un examen clinique complet et envisager des examens d'imagerie si nécessaire."
+      },
+      {
+        "id": "NE4fAc-8e0vHbG925F2bJ",
+        "question": "Quelles sont les différences entre le défilé vasculaire et neurogène ?",
+        "answer": "Défilé vasculaire affecte l'artère/veine; défilé neurogène affecte le plexus brachial."
+      },
+      {
+        "id": "pTI1IBJNx53aUpylbjn7V",
+        "question": "Quel est le traitement initial recommandé pour le défilé du petit pectoral ?",
+        "answer": "Musculaire (étirements et renforcement), mobilisation nerveuse, corrections posturales."
+      },
+      {
+        "id": "ytkbxOciJDb1xMeo64kXU",
+        "question": "Comment se manifeste la symptomatologie dans le syndrome du défilé ?",
+        "answer": "Symptômes peuvent être unilatéraux ou bilatéraux, souvent augmentés lors de l'élévation des bras."
+      },
+      {
+        "id": "f0uYAf0rMoFn8sD4q5cmz",
+        "question": "Quels tests sont couramment utilisés pour évaluer le syndrome du défilé thoraco-brachial ?",
+        "answer": "Tests de Roos, test de Adson, test d'Hyperabduction."
+      },
+      {
+        "id": "hsibomJqnafXbUlP8G7SJ",
+        "question": "Quel est le rôle de l'antécédent sportif dans le TOS ?",
+        "answer": "Le lien entre certaines professions ou sports (ex: piloter, lancer) et l'hypertonie musculaire qui contribue au syndrome."
+      },
+      {
+        "id": "BczS17jTijiFU935DZdwX",
+        "question": "Quels sont les symptômes typiques du défilé vasculaire ?",
+        "answer": "Douleurs intermittentes lors d'efforts, froideur, paresthésies dans le bras."
+      },
+      {
+        "id": "WMWE5IAt3sfDbsUDiEJbZ",
+        "question": "Quelle est la prévalence du TOS bilatéral ?",
+        "answer": "Chez 25% des cas de TOS."
+      },
+      {
+        "id": "PSJ0ZQvYnDApxo20PVo0X",
+        "question": "Quels sont les examens complémentaires utiles dans le diagnostic du TOS ?",
+        "answer": "Échographie Doppler, IRM, angiographie."
+      },
+      {
+        "id": "eUJvPiWGgSDc4XTOurDcX",
+        "question": "Quelle est l'importance de la posture dans le TOS ?",
+        "answer": "Une posture inadéquate peut exacerber les symptômes en provoquant une compression."
+      },
+      {
+        "id": "HZfF5lQXFl5M28_L_QSem",
+        "question": "Comment se distingue le défilé combiné ?",
+        "answer": "Association des symptômes neurologiques et vasculaires."
+      },
+      {
+        "id": "JfRLcfjsmTBDIGcpobJEC",
+        "question": "Quels facteurs aggravent typiquement les symptômes du TOS ?",
+        "answer": "Mouvements du bras au-dessus de la tête, maintien prolongé des bras en l’air."
+      },
+      {
+        "id": "GXy-fzHHdyWLtxjx639dy",
+        "question": "Quel rôle joue l’anamnèse dans le diagnostic du TOS ?",
+        "answer": "Identifie les symptômes, les antécédents, et aide à préciser le type de TOS."
+      },
+      {
+        "id": "Tf5e5QlkdQkEwH4zZaxap",
+        "question": "Quels sont les signes cliniques associés au défilé scapulo-costal ?",
+        "answer": "Limitation de l'amplitude des mouvements, douleurs localisées."
+      },
+      {
+        "id": "rLUNzfd6xy0gETcO9hKUJ",
+        "question": "Quels traitements sont validés pour le syndrome du défilé thoraco-brachial ?",
+        "answer": "Kinésithérapie, modifications posturales, interventions chirurgicales si nécessaire."
+      },
+      {
+        "id": "JGwjIsUOXH2v3CEDzf5jg",
+        "question": "Quels sont les pièges diagnostiques à éviter dans le TOS ?",
+        "answer": "Confondre avec des pathologies comme la hernie discale cervicale ou les pathologies vasculaires."
+      },
+      {
+        "id": "EncT3icJjcW8AW8Hh_B-D",
+        "question": "Quelles sont les répercussions psychosociales potentiellement associsées au TOS ?",
+        "answer": "Impact sur la qualité de vie, limitation des activités quotidiennes, stress lié à la douleur."
+      },
+      {
+        "id": "C25cCcs2qpBzFWKfZJHjS",
+        "question": "Quel est l'impact de l'éducation thérapeutique dans le traitement du TOS ?",
+        "answer": "Elle aide à la compréhension des symptômes et à l'amélioration de l'adhérence au traitement."
+      },
+      {
+        "id": "fXH2YUPaN8qEx7pPXSJrM",
+        "question": "Quels sont les critères d’envoi vers un spécialiste en cas de TOS ?",
+        "answer": "Symptômes persistants malgré traitement conservateur, suspicion de pathologie associée grave."
+      },
+      {
+        "id": "2lvVYZMKEEyeXtOIfYIsw",
+        "question": "Quel est le pronostic des patients atteints de TOS ?",
+        "answer": "En général, le pronostic est favorable avec un traitement approprié, bien que certains cas nécessitent intervention chirurgicale."
+      },
+      {
+        "id": "B2kYYPlcaibvgQUGdLizd",
+        "question": "Quelle est la conduite à tenir lors d’un examen fonctionnel ?",
+        "answer": "Évaluer la capacité fonctionnelle de l'articulation et la réponse symptomatique aux tests."
+      },
+      {
+        "id": "WLlQDFl4ZN_Z-w2Hudsqf",
+        "question": "Quels sont les effets d'une mauvaise posture sur le TOS ?",
+        "answer": "Elle peut provoquer une compression supplémentaire des structures neurovasculaires."
+      },
+      {
+        "id": "zu-t0uIkhOG7n9s1-omYs",
+        "question": "Quel est l'impact du mode de vie sur le syndrome du défilé ?",
+        "answer": "Certaines activités et métiers favorisent l'apparition et l'aggravation des symptômes."
+      },
+      {
+        "id": "fn-a0u-p3TOIxQo2sYokG",
+        "question": "Quels éléments doivent figurer dans l’évaluation de l’âge des symptômes ?",
+        "answer": "Chronologie, déclencheurs, fréquence, et intensité des symptômes."
+      },
+      {
+        "id": "muvNngDXzJbXjda4slZm2",
+        "question": "Quelles techniques de kinésithérapie sont efficaces pour le TOS ?",
+        "answer": "Techniques d'étirement, renforcement musculaire, rééducation posturale."
+      },
+      {
+        "id": "6DE71_czVGGh9DErMeUzH",
+        "question": "Quels symptômes peuvent indiquer un syndrome du billot huméral ?",
+        "answer": "Douleurs antérieures de l'épaule, irradiant dans le bras."
+      },
+      {
+        "id": "O9NuAEtZntUK1SGOP6nDA",
+        "question": "Quels sont les éléments à surveiller lors du traitement du TOS ?",
+        "answer": "Réponse au traitement, évolution des symptômes, complications potentielles."
+      },
+      {
+        "id": "3_gzNLUlencW52bNND5mJ",
+        "question": "Pourquoi est-il crucial d'évaluer les antécédents médicaux dans le TOS ?",
+        "answer": "Pour mieux comprendre la cause des symptômes et adapter le traitement."
+      },
+      {
+        "id": "CAbsox5H-yR7ETL7vNIIv",
+        "question": "Quel est l'effet des positions prolongées sur la symptomatologie du TOS ?",
+        "answer": "Elles peuvent aggraver les douleurs et engourdissements."
+      }
+    ],
+    "mcqs": [
+      {
+        "id": "fcwwhn5e1RYYkmUqbEzyk",
+        "question": "Quel pourcentage des patients présente un défilé neurogène ?",
+        "options": [
+          "50%",
+          "75%",
+          "80%",
+          "98%"
+        ],
+        "correctIndex": 3,
+        "explanation": "98% des patients présentent un défilé neurogène vrai ou symptomatique."
+      },
+      {
+        "id": "8zUeAIZVcCgggvqlFe9QU",
+        "question": "Quel examen est le plus utilisé pour diagnostiquer le syndrome du défilé thoraco-brachial ?",
+        "options": [
+          "Radiographie",
+          "IRM",
+          "Échographie Doppler",
+          "CT scan"
+        ],
+        "correctIndex": 2,
+        "explanation": "L'échographie Doppler permet d'évaluer la circulation sanguine et d'identifier d'éventuelles compressions."
+      },
+      {
+        "id": "fVcR_HzGqE6ou75R9vHb5",
+        "question": "Quel est le ratio femmes/hommes fréquemment cité dans la littérature pour le TOS ?",
+        "options": [
+          "3:1",
+          "4:1",
+          "2:1",
+          "1:1"
+        ],
+        "correctIndex": 1,
+        "explanation": "Le TOS se présente souvent avec un ratio de 4 femmes pour 1 homme."
+      },
+      {
+        "id": "YX9Q6yQlxSPHuq_Fn4JCQ",
+        "question": "Quels sont les premiers signes d'un défilé vasculaire ?",
+        "options": [
+          "Douleurs au repos",
+          "Paresthésies",
+          "Froid dans les membres",
+          "Engourdissements"
+        ],
+        "correctIndex": 2,
+        "explanation": "Les symptômes vasculaires incluent souvent un froid dans les membres, en raison de la compression des vaisseaux."
+      },
+      {
+        "id": "lXVTOI6y5iLER1QRMPEJL",
+        "question": "Quel test est spécifique au diagnostic de la compression par le petit pectoral ?",
+        "options": [
+          "Test de Roos",
+          "Test d'Adson",
+          "Test de Hyperabduction",
+          "Test de Spurling"
+        ],
+        "correctIndex": 1,
+        "explanation": "Le test de Roos évalue la capacité à maintenir les bras au-dessus de la tête et détecte une compression."
+      },
+      {
+        "id": "6dXdTa46GEfN5LKI_C2qt",
+        "question": "Quel est le majoritaire des défilés thoraco-brachiaux ?",
+        "options": [
+          "Neurogène",
+          "Vasculaire",
+          "Combiné",
+          "Non spécifié"
+        ],
+        "correctIndex": 0,
+        "explanation": "98% des cas sont de type neurogène."
+      },
+      {
+        "id": "CEcDbz5SYwFeZ3y01DBHR",
+        "question": "Quels sont les traitements non chirurgicaux recommandés pour le TOS ?",
+        "options": [
+          "Kinésithérapie",
+          "Injection de corticostéroïdes",
+          "Chirurgie",
+          "Chaleur locale"
+        ],
+        "correctIndex": 0,
+        "explanation": "La kinésithérapie est la première ligne de traitement pour soulager les symptômes."
+      },
+      {
+        "id": "dmMYAATykJwO5KrVoB3nU",
+        "question": "Quels patients doivent être orientés vers un spécialiste ?",
+        "options": [
+          "Tous les patients",
+          "Seulement ceux avec des antécédents",
+          "Ceux avec symptômes persistants",
+          "Ceux qui ne font pas de kinésithérapie"
+        ],
+        "correctIndex": 2,
+        "explanation": "L'orientation vers un spécialiste est recommandée si les symptômes persistent malgré le traitement conservateur."
+      },
+      {
+        "id": "ra1tl2BM2CYcbh5WQhOir",
+        "question": "Quel est un facteur de risque connu pour le TOS ?",
+        "options": [
+          "Être sédentaire",
+          "Postures prolongées",
+          "Mauvaise alimentation",
+          "Jeunesse"
+        ],
+        "correctIndex": 1,
+        "explanation": "Les postures prolongées contribuent à la compression des structures thoraco-brachiales."
+      },
+      {
+        "id": "XCwibhLcKzMZqPQn-8AWM",
+        "question": "Quel est l'impact de l'éducation thérapeutique chez les patients TOS ?",
+        "options": [
+          "Aucun",
+          "Peu d'impact",
+          "Amélioration de la compréhension des symptômes",
+          "Aggravation des symptômes"
+        ],
+        "correctIndex": 2,
+        "explanation": "L’éducation thérapeutique aide les patients à mieux comprendre leurs symptômes et favorise l’adhérence au traitement."
+      }
+    ],
+    "plan7d": [
+      "Réviser les généralités sur le syndrome du défilé thoraco-brachial.",
+      "Faire une série de flashcards sur les étiologies du TOS.",
+      "Étudier les tests spécifiques utilisés dans le diagnostic du TOS.",
+      "Revoir les traitements non chirurgicaux du TOS.",
+      "Examiner les critères de diagnostic différentiel liés au TOS.",
+      "Pratiquer des QCM sur le syndrome du défilé thoraco-brachial.",
+      "Discuter des conséquences psychosociales du TOS."
+    ]
+  },
+  {
+    "id": "ouMpW5fByEEbTjN9bd-3D",
+    "title": "UE19 - Évaluation des Interventions Musculo-Squelettiques",
+    "createdAt": 1767904032739,
+    "level": "PASS",
+    "cards": [
+      {
+        "id": "7sJiRFXEoxmLzak0IYxyC",
+        "question": "Qu'est-ce que le syndrome du défilé thoraco-brachial (TOS) ?",
+        "answer": "C'est une compression du plexus brachial et/ou de l'artère subclavière et veine subclavière."
+      },
+      {
+        "id": "RZlCdtk2k327rR2KP7pq5",
+        "question": "Quels sont les principaux symptômes du TOS ?",
+        "answer": "Douleurs paresthésiques et lourdeur dans le bras, aggravées par l'élévation du bras."
+      },
+      {
+        "id": "T_CCxEMcTzCoPzp9xo9wV",
+        "question": "Combien de types d'accrochages sont décrits dans la littérature pour le TOS ?",
+        "answer": "Six types d'accrochages."
+      },
+      {
+        "id": "gC7Yb60At6QqsHxpS8vA2",
+        "question": "Quel est le ratio de femmes touchées par rapport aux hommes pour le TOS ?",
+        "answer": "Entre 4 femmes pour 1 homme et 2 femmes pour 1 homme."
+      },
+      {
+        "id": "Lj4GOO5t-uGqUsDlrMaq7",
+        "question": "Quels sont les types de traitement pour le défilé costo-claviculaire ?",
+        "answer": "Articulaire, musculaire, mobilité nerveuse, corrections posturales."
+      },
+      {
+        "id": "wI4dxSqFzy4MDpmVp5rDW",
+        "question": "Quel est le taux d'incidence du TOS dans la population générale ?",
+        "answer": "8%."
+      },
+      {
+        "id": "mDX3H3SeD2X3odqN53AVR",
+        "question": "Quels sports peuvent favoriser le développement du TOS ?",
+        "answer": "Escrime, escalade, métiers manuels."
+      },
+      {
+        "id": "IJ8PJxhW8WumMylB7cgm5",
+        "question": "Quelle est la particularité du défilé neurogène ?",
+        "answer": "98% des cas de TOS sont neurogènes."
+      },
+      {
+        "id": "JBdwpc1vhTtN9NCgB_1ZL",
+        "question": "Quelles sont les causes possibles de compression dans le TOS ?",
+        "answer": "Traumatismes, anomalies congénitales, postures prolongées."
+      },
+      {
+        "id": "-TURGH3rCJJb5juiIoW_i",
+        "question": "Quel pourcentage des TOS sont bilatéraux ?",
+        "answer": "25%."
+      }
+    ],
+    "mcqs": [
+      {
+        "id": "8CRbZClyQvBNmjXaJXS78",
+        "question": "Quel type de douleur est lié au TOS ?",
+        "options": [
+          "Douleur aiguë",
+          "Paresthésique",
+          "Douleur sourde"
+        ],
+        "correctIndex": 1,
+        "explanation": "La douleur paresthésique est caractéristique du TOS."
+      },
+      {
+        "id": "VVB5PDsYcfDUkq5vF56N8",
+        "question": "Qu'est-ce qui peut aggraver les symptômes du TOS ?",
+        "options": [
+          "Élévation du bras",
+          "Repos",
+          "Porte de charge"
+        ],
+        "correctIndex": 0,
+        "explanation": "Les symptômes du TOS s'aggravent avec l'élévation du bras."
+      },
+      {
+        "id": "PQFP6PQuqwA7IMuq_xrgc",
+        "question": "Quelle structure peut être impliquée dans le TOS ?",
+        "options": [
+          "Artère jugulaire",
+          "Artère subclavière",
+          "Artère carotide"
+        ],
+        "correctIndex": 1,
+        "explanation": "L'artère subclavière est souvent compressée dans le TOS."
+      },
+      {
+        "id": "G0H2eeI16wroSUxD4dULn",
+        "question": "Quel est un facteur aggravant du TOS ?",
+        "options": [
+          "Maintien prolongé bras en bas",
+          "Maintien prolongé bras en l'air",
+          "Exercice léger"
+        ],
+        "correctIndex": 1,
+        "explanation": "Un maintien prolongé bras en l'air aggrave les symptômes."
+      },
+      {
+        "id": "dj78lKXHQxzVEE5UaPRx3",
+        "question": "Quel type de TOS présente 2% des cas ?",
+        "options": [
+          "Neurogène",
+          "Vasculaire",
+          "Symptomatique"
+        ],
+        "correctIndex": 1,
+        "explanation": "2% des cas de TOS sont vasculaires."
+      },
+      {
+        "id": "ji1bjIittBGhmOxKBl2On",
+        "question": "Quelle est la première étape de l'examen clinique dans le TOS ?",
+        "options": [
+          "Bilan neurologique",
+          "Interrogatoire",
+          "Examen palpatoire"
+        ],
+        "correctIndex": 1,
+        "explanation": "L'interrogatoire est la première étape pour recueillir des informations."
+      },
+      {
+        "id": "9WJVH7k1hy-MaHwqc9eYw",
+        "question": "Quel est le but du traitement du TOS ?",
+        "options": [
+          "Soulager uniquement la douleur",
+          "Corriger la posture",
+          "Restaurer la fonction nerveuse"
+        ],
+        "correctIndex": 2,
+        "explanation": "Restaurer la fonction nerveuse est crucial dans le traitement."
+      },
+      {
+        "id": "RYltxwXxxAg5kb16zeKBT",
+        "question": "Quelle est la technique de traitement recommandée pour le petit pectoral ?",
+        "options": [
+          "Mobilité nerveuse",
+          "Articulations",
+          "Renforcement musculaire"
+        ],
+        "correctIndex": 0,
+        "explanation": "La mobilité nerveuse est essentielle pour traiter les symptômes."
+      },
+      {
+        "id": "1yPTEKT9XkX1HvzGRmo-n",
+        "question": "Quelle pathologie musculo-squelettique est associée au TOS ?",
+        "options": [
+          "Syndrome du canal carpien",
+          "Épicondylite",
+          "Tendinite de la coiffe des rotateurs"
+        ],
+        "correctIndex": 2,
+        "explanation": "Le TOS peut coexister avec des troubles de la coiffe des rotateurs."
+      },
+      {
+        "id": "baZH9rcq7aO4r-pZqkGc_",
+        "question": "Quel pourcentage des patients TOS présentent des symptômes bilatéraux ?",
+        "options": [
+          "10%",
+          "25%",
+          "50%"
+        ],
+        "correctIndex": 1,
+        "explanation": "Environ 25% des cas de TOS présentent des symptômes bilatéraux."
+      }
+    ],
+    "plan7d": [
+      "Jour 1 : Lire le chapitre sur le syndrome du défilé.",
+      "Jour 2 : Réviser le diagnostic et les tests spécifiques.",
+      "Jour 3 : Pratiquer des cas cliniques sur le TOS.",
+      "Jour 4 : Regarder des vidéos explicatives sur les traitements.",
+      "Jour 5 : Faire des QCM sur le TOS pour tester ses connaissances.",
+      "Jour 6 : Relecture des flashcards sur les bilans cliniques et examens.",
+      "Jour 7 : Synthèse et révision rapide de tous les concepts clés."
+    ]
+  },
+  {
+    "id": "kzlFO-JBsFaEoYAvu2STw",
+    "title": "Révision : Scoliose (UE19)",
+    "createdAt": 1767819606382,
+    "level": "PASS",
+    "cards": [
+      {
+        "id": "xWCT0o_oXoNstvzemBy3E",
+        "question": "Qu'est-ce que la scoliose ?",
+        "answer": "C'est une déformation du rachis en trois dimensions, souvent caractérisée par une courbure latérale."
+      },
+      {
+        "id": "kw_YKOoNmXW6QVeZHcefX",
+        "question": "Quels sont les principaux types d'étiologies de la scoliose ?",
+        "answer": "Idiopathique, congénitale et acquise."
+      },
+      {
+        "id": "PdsecG3PUngql8QtT2eqD",
+        "question": "Quel est l'angle de Cobb ?",
+        "answer": "C'est la mesure utilisée pour évaluer la sévérité de la scoliose en mesurant l'angle entre les vertèbres les plus inclinées."
+      },
+      {
+        "id": "-rPIdsalb_apb3gws7204",
+        "question": "Quelle est la différence entre la scoliose posturale et l'attitude scoliotique ?",
+        "answer": "La scoliose posturale peut être corrigée par des changements de position, tandis que l'attitude scoliotique est souvent structurale."
+      },
+      {
+        "id": "yDH6FfkNYwoOVL7ZJmUPH",
+        "question": "Quel muscle a une importance particulière dans le soutien du rachis lombaire ?",
+        "answer": "Le muscle ilio-psoas."
+      },
+      {
+        "id": "k07_r5EyhSKhjgbMplqRv",
+        "question": "Quelle est la courbe de Duval-Beaupère ?",
+        "answer": "C'est une méthode de diagnostic de la scoliose basée sur l'analyses des courbures du rachis."
+      },
+      {
+        "id": "GTm_WO2e9p4qH30AuNvQ5",
+        "question": "Quel traitement orthopédique est souvent utilisé pour la scoliose ?",
+        "answer": "Le corset orthoédique."
+      },
+      {
+        "id": "jyB4tMFDPmWoZydzTwDmM",
+        "question": "Quel rôle joue le rachis dorsal dans notre anatomie ?",
+        "answer": "Il protège les organes nobles et est relativement peu mobile."
+      },
+      {
+        "id": "a0jwv4rwNDwz5buH64rX6",
+        "question": "Quels sont les pivots anatomiques importants au niveau du rachis ?",
+        "answer": "T4 pour la mobilité cervicale et T9 pour la relation ceinture scapulaire/pelvienne."
+      },
+      {
+        "id": "NY9Q7bQ7mBKZ1yGlkQjg-",
+        "question": "Pourquoi est-il important de dépister la scoliose tôt ?",
+        "answer": "Un dépistage précoce permet une prise en charge optimale et limite les complications."
+      }
+    ],
+    "mcqs": [
+      {
+        "id": "jCchG4rhqt62xVzmFSuRX",
+        "question": "Quel est le rôle principal du rachis cervical ?",
+        "options": [
+          "Supporter le poids du corps",
+          "Maintenir le regard horizontal",
+          "Protéger la moelle épinière"
+        ],
+        "correctIndex": 1,
+        "explanation": "Le rachis cervical permet de maintenir la tête en position et d'adapter le regard."
+      },
+      {
+        "id": "cuYlt7GPiO3YkagG6f6sV",
+        "question": "Quelle est la principale caractéristique de la scoliose idiopathique ?",
+        "options": [
+          "100% d'origine génétique",
+          "Apparition durant l'enfance",
+          "Scoliose acquise"
+        ],
+        "correctIndex": 1,
+        "explanation": "La scoliose idiopathique apparaît le plus souvent durant la croissance, sans cause clairement identifiée."
+      },
+      {
+        "id": "EFTHRALNPOJFq7TsIGQLF",
+        "question": "Comment mesure-t-on la gravité de la scoliose ?",
+        "options": [
+          "Par une IRM",
+          "Avec l'angle de Cobb",
+          "Par palpation"
+        ],
+        "correctIndex": 1,
+        "explanation": "L'angle de Cobb est la méthode standard pour quantifier l'importance de la déviation."
+      },
+      {
+        "id": "i_xrBSvN92KqBKUCdpQOg",
+        "question": "Quel traitement est principalement utilisé pour corriger une scoliose sévère ?",
+        "options": [
+          "Exercices de rééducation",
+          "Chirurgie",
+          "Corset orthopédique"
+        ],
+        "correctIndex": 1,
+        "explanation": "Les cas sévères de scoliose peuvent nécessiter une intervention chirurgicale pour réaligner le rachis."
+      },
+      {
+        "id": "IeLnceab833YOb_VGVDRP",
+        "question": "Quel muscle est principalement mis en jeu dans la posture du rachis lombaire ?",
+        "options": [
+          "Grand dorsal",
+          "Érecteurs du rachis",
+          "Ilio-psoas"
+        ],
+        "correctIndex": 2,
+        "explanation": "Le muscle ilio-psoas joue un rôle central dans le maintien de la posture lombaire."
+      }
+    ],
+    "plan7d": [
+      "Relire le cours sur le rachis cervical.",
+      "Faire un schéma explicatif sur l'angle de Cobb.",
+      "Réviser les étiologies de la scoliose idiopathique.",
+      "Faire trois QCM supplémentaires sur les traitements de la scoliose.",
+      "Discuter avec un camarade des différences entre scoliose idiopathique et secondaire.",
+      "Réaliser un tableau sur les muscles du rachis et leurs fonctions.",
+      "Préparer des flashcards pour les vertèbres remarquables."
+    ]
+  }
+]

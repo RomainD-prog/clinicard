@@ -1,30 +1,37 @@
-# Patch: Annale (mode concours) pour améliorer la génération (flashcards + QCM)
+# Medflash / CliniCard – patch “best fixes” (routing + startup crash)
 
-Ce patch ajoute la possibilité de joindre une **annale de concours (PDF, optionnelle)** lors de l'import d'un cours.
+Dézippe ce patch par-dessus ton projet.
 
-## Ce que ça fait
-- **UI Import**: bouton pour sélectionner une annale PDF (optionnel) + possibilité de la retirer.
-- **Options de génération**: switch "Activer le mode concours" (uniquement si une annale est sélectionnée) + niveau d'influence (faible/moyen/fort).
-- **Backend**:
-  - accepte un second fichier multipart `exam` (en plus de `file`).
-  - extrait le texte de l'annale et produit un **blueprint abstrait** (sans verbatim) via OpenAI.
-  - utilise ce blueprint pour guider le **style** des flashcards/QCM (formats, pièges, difficulté) tout en gardant le **contenu factuel** strictement issu du cours.
+## Ce que le patch fait
 
-## Installation
-1. Dézippe ce fichier.
-2. Copie/écrase les fichiers dans la racine de ton projet `medflash` :
-   - `app/import/index.tsx`
-   - `app/import/options.tsx`
-   - `src/services/api.ts`
-   - `src/services/backendApi.ts`
-   - `src/store/useAppStore.ts`
-   - `src/types/models.ts`
-   - `backend/src/index.js`
-   - `backend/src/generate.js`
+- Met à jour `app/_layout.tsx` pour déclarer l’écran d’onboarding sous le nom `onboarding`.
+- Ajoute un script pour détecter automatiquement les routes en double.
 
-## Notes
-- Le backend expose maintenant `/v1/jobs` avec `multipart/form-data` contenant:
-  - `file` (cours)
-  - `exam` (annale, optionnel)
-  - champs `examGuided` et `examInfluence`
-- Les warnings `expo-notifications` dans Expo Go sont normaux (SDK 53+).
+## Étapes à faire après import
+
+### 1) Résoudre l’erreur "conflicting screens" sur `onboarding`
+
+L’erreur arrive quand **deux fichiers mappent la même route**. Exemple typique :
+
+- `app/onboarding.tsx`
+- `app/onboarding/index.tsx`
+
+Ces deux-là créent tous les deux la route `/onboarding`.
+
+✅ Garde **un seul** des deux :
+- Soit tu gardes `app/onboarding/index.tsx` et tu supprimes `app/onboarding.tsx`
+- Soit tu gardes `app/onboarding.tsx` et tu supprimes le dossier `app/onboarding/`
+
+### 2) Vérifier automatiquement les doublons
+
+Lance :
+
+```bash
+node scripts/check-expo-router-conflicts.js
+```
+
+Le script te liste les couples `X.tsx` vs `X/index.tsx` trouvés.
+
+### 3) Note sur `expo-notifications` dans Expo Go
+
+Le warning `expo-notifications ... not fully supported in Expo Go` est normal. Pour tester les notifications, il faut un **dev build** (expo-dev-client) ou un build EAS.
