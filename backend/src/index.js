@@ -206,7 +206,7 @@ app.delete("/v1/decks/:deckId", loadUsage, (req, res) => {
     console.error("[DELETE /v1/decks]", safeErr(e));
     res.status(500).json({ error: "server_error" });
   }
-});
+);
 
 // admin: set premium (protégé par token)
 app.post("/v1/admin/subscription", (req, res) => {

@@ -12,8 +12,13 @@ export type GenerationOptions = {
   // ✅ NEW
   autoCounts?: boolean; // si true: flashcardsCount/mcqCount = MAX
   intensity?: "light" | "standard" | "max";
-};
 
+  // ✅ Mode concours (optionnel)
+  // Si examGuided=true et qu'un fichier d'annale est fourni, le backend analyse l'annale
+  // et génère un "blueprint" pour guider le style/niveau des flashcards et QCM.
+  examGuided?: boolean;
+  examInfluence?: "low" | "medium" | "high";
+};
 
 export type PickedFile = {
   uri: string;
@@ -27,11 +32,11 @@ export type JobStatus = "queued" | "processing" | "done" | "error";
 export type GenerationJob = {
   jobId: string;
   status: JobStatus;
-  progress: number;      // 0..1
+  progress: number; // 0..1
   deckId?: string;
   errorMessage?: string;
   createdAt: number;
-  options?: GenerationOptions; 
+  options?: GenerationOptions;
   sourceFilename?: string;
 };
 
@@ -73,12 +78,13 @@ export type MCQ = {
 export type ReviewRecord = {
   cardId: string;
   deckId: string;
-  dueAt: number;       // timestamp ms
+  dueAt: number; // timestamp ms
   intervalDays: number; // interval
-  ease: number;         // ease factor
-  reps: number;         // repetitions
+  ease: number; // ease factor
+  reps: number; // repetitions
   lastReviewedAt?: number;
 };
+
 export type QuizAttempt = {
   id: string;
   deckId: string;

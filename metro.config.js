@@ -1,20 +1,25 @@
+// metro.config.js
 const { getDefaultConfig } = require("expo/metro-config");
 const path = require("path");
 
-const config = getDefaultConfig(__dirname);
+const projectRoot = __dirname;
+const config = getDefaultConfig(projectRoot);
 
-// 1) Permet de résoudre les fichiers .cjs (fix nanoid/non-secure)
-config.resolver.sourceExts = Array.from(
-  new Set([...(config.resolver.sourceExts || []), "cjs"])
-);
-
-// 2) Force Metro à préférer les builds "browser" avant "main" (évite ws/stream côté natif)
-config.resolver.resolverMainFields = ["react-native", "browser", "module", "main"];
-
-// 3) Sécurité : si "ws" est quand même résolu, on le mappe vers ton shim
 config.resolver.extraNodeModules = {
   ...(config.resolver.extraNodeModules || {}),
-  ws: path.resolve(__dirname, "src/shims/ws.js"),
+
+  // Shim ws (si tu l’utilises)
+  ws: path.resolve(projectRoot, "src/shims/ws.js"),
+
+  // Neutraliser react-native-url-polyfill (si tu as gardé cette approche)
+  "react-native-url-polyfill/auto": path.resolve(
+    projectRoot,
+    "src/shims/react-native-url-polyfill-auto.js"
+  ),
+  "react-native-url-polyfill": path.resolve(
+    projectRoot,
+    "src/shims/react-native-url-polyfill.js"
+  ),
 };
 
 module.exports = config;

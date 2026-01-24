@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Pressable,
@@ -20,8 +20,6 @@ import { useStitchTheme } from "../../src/uiStitch/theme";
 import { computeDeckStats, pct } from "../../src/utils/stats";
 import { userInitials } from "../../src/utils/user";
 
-const { decks, authUser } = useAppStore();
-const initials = userInitials(authUser);
 
 type DeckRow = {
   deck: Deck;
@@ -179,11 +177,11 @@ function ProgressBar({ value01 }: { value01: number }) {
 }
 
 export default function LibraryTab() {
+  const { decks, authUser } = useAppStore();
+  const initials = userInitials(authUser);
+
   const router = useRouter();
   const t = useStitchTheme();
-
-  const { decks } = useAppStore();
-
   const [query, setQuery] = useState("");
   const [activeChip, setActiveChip] = useState<string>("All");
   const [rows, setRows] = useState<DeckRow[] | null>(null);
@@ -267,7 +265,7 @@ export default function LibraryTab() {
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Search topics or decks..."
+              placeholder="Rechercher un sujet ou un cours..."
               placeholderTextColor={t.muted}
               style={[
                 styles.searchInput,

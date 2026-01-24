@@ -131,7 +131,7 @@ export default function ImportScreen() {
   const router = useRouter();
   const t = useStitchTheme();
 
-  const { selectedFile, setSelectedFile, level, freeImportsRemaining, creditsBalance } = useAppStore();
+  const { selectedFile, selectedExamFile, setSelectedFile, setSelectedExamFile, level, freeImportsRemaining, creditsBalance } = useAppStore();
 
   const [mode, setMode] = useState<Mode>("pdf");
   const [textValue, setTextValue] = useState("");
@@ -148,7 +148,9 @@ export default function ImportScreen() {
     setMode(next);
     setError(null);
     setSelectedFile(null);
+    setSelectedExamFile(null);
   }
+
 
   async function pickPdf() {
     setError(null);
@@ -173,6 +175,7 @@ export default function ImportScreen() {
       mimeType: f.mimeType ?? "application/pdf",
       size: f.size,
     });
+    setSelectedExamFile(null);
   }
 
   async function useTextAsSource() {
@@ -199,10 +202,43 @@ export default function ImportScreen() {
         mimeType: "text/plain",
         size: v.length,
       });
+
+      setSelectedExamFile(null);
     } catch (e: any) {
       setError(e?.message ?? "Impossible de créer le fichier texte.");
     }
   }
+
+  async function pickExamPdf() {
+    setError(null);
+
+    const res = await DocumentPicker.getDocumentAsync({
+      type: ["application/pdf"],
+      copyToCacheDirectory: true,
+      multiple: false,
+    });
+
+    if (res.canceled) return;
+
+    const f = res.assets?.[0];
+    if (!f?.uri) {
+      setError("Annale invalide.");
+      return;
+    }
+
+    setSelectedExamFile({
+      uri: f.uri,
+      name: f.name ?? "annale.pdf",
+      mimeType: f.mimeType ?? "application/pdf",
+      size: f.size,
+    });
+  }
+
+  function clearExamPdf() {
+    setSelectedExamFile(null);
+  }
+
+
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: t.bg }}>
@@ -336,6 +372,75 @@ export default function ImportScreen() {
           )}
         </Card>
 
+
+
+        {/* Annale (optionnel) */}
+        {selectedFile ? (
+          <Card>
+            <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 18 }}>
+              Annale (optionnel)
+            </Text>
+            <Text style={{ marginTop: 6, color: t.muted, fontFamily: t.font.body }}>
+              Ajoute une annale de concours liée à ce cours. L'IA s'en sert uniquement pour comprendre le style des questions (sans recopier).
+            </Text>
+
+            <View style={{ height: 12 }} />
+
+            <View style={{ marginLeft: 12, marginTop: 8 }}>
+              <Pressable
+                onPress={pickExamPdf}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 8,
+                  paddingVertical: 10,
+                  paddingHorizontal: 14,
+                  borderRadius: 12,
+                  backgroundColor: t.dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+                  borderWidth: 1,
+                  borderColor: t.border,
+                }}
+              >
+                <Ionicons name="document-outline" size={18} color={t.muted} />
+                <Text style={{ color: t.text, fontFamily: t.font.body, fontSize: 14 }}>
+                  {selectedExamFile ? "Changer d'annale" : "Ajouter une annale PDF"}
+                </Text>
+              </Pressable>
+
+              <Text
+                style={{
+                  marginTop: 8,
+                  color: t.muted,
+                  fontFamily: t.font.body,
+                  fontSize: 13,
+                  marginLeft: 4,
+                }}
+              >
+                {selectedExamFile ? `✅ Annale : ${selectedExamFile.name}` : "Aucune annale sélectionnée."}
+              </Text>
+
+              {selectedExamFile ? (
+                <Pressable
+                  onPress={clearExamPdf}
+                  style={{
+                    marginTop: 10,
+                    alignSelf: "flex-start",
+                    paddingVertical: 8,
+                    paddingHorizontal: 12,
+                    borderRadius: 12,
+                    backgroundColor: t.dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+                    borderWidth: 1,
+                    borderColor: t.border,
+                  }}
+                >
+                  <Text style={{ color: t.text, fontFamily: t.font.body, fontSize: 13 }}>
+                    Retirer l'annale
+                  </Text>
+                </Pressable>
+              ) : null}
+            </View>
+          </Card>
+        ) : null}
         {/* error */}
         {error ? (
           <View

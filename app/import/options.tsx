@@ -1,7 +1,7 @@
 // app/import/options.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Pressable,
@@ -107,7 +107,7 @@ export default function ImportOptionsScreen() {
   const router = useRouter();
   const t = useStitchTheme();
 
-  const { selectedFile, level, freeImportsRemaining, creditsBalance, decks, isSubscribed } = useAppStore();
+  const { selectedFile, selectedExamFile, level, freeImportsRemaining, creditsBalance, decks, isSubscribed } = useAppStore();
 
   const filename = selectedFile?.name ?? "—";
   const canGenerate = !!selectedFile;
@@ -118,10 +118,18 @@ export default function ImportOptionsScreen() {
   // ✅ L'IA décide du nombre de cartes selon le contenu
   const [intensity, setIntensity] = useState<"light" | "standard" | "max">("standard");
 
+  // ✅ Mode concours (annales)
+  const [examGuided, setExamGuided] = useState<boolean>(!!selectedExamFile);
+  const [examInfluence, setExamInfluence] = useState<"low" | "medium" | "high">("medium");
+
   const [planDays, setPlanDays] = useState(7);
   const [medicalStyle, setMedicalStyle] = useState(true);
 
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!selectedExamFile) setExamGuided(false);
+  }, [selectedExamFile]);
 
   // Récupérer toutes les matières uniques des decks existants
   const existingSubjects = useMemo(() => {
@@ -184,9 +192,14 @@ export default function ImportOptionsScreen() {
       (opts as any).autoCounts = true;
       (opts as any).intensity = intensity;
 
+      // ✅ Mode concours (si annale fournie)
+      (opts as any).examGuided = Boolean(examGuided && selectedExamFile);
+      (opts as any).examInfluence = examInfluence;
+
       const { jobId } = await api.startGeneration(
         { uri: selectedFile.uri, name: selectedFile.name, mimeType: selectedFile.mimeType, size: selectedFile.size },
-        opts
+        opts,
+        (examGuided && selectedExamFile) ? { uri: selectedExamFile.uri, name: selectedExamFile.name, mimeType: selectedExamFile.mimeType, size: selectedExamFile.size } : undefined
       );
 
       router.replace(`/job/${jobId}`);
@@ -368,6 +381,52 @@ export default function ImportOptionsScreen() {
           </View>
         </Card>
 
+
+
+        {/* Mode concours (annales) */}
+        {selectedExamFile ? (
+          <>
+            <Text style={[styles.sectionTitle, { color: t.muted, fontFamily: t.font.semibold }]}>MODE CONCOURS</Text>
+            <Card>
+              <View style={[styles.row, { borderColor: t.border, alignItems: "center" }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 16 }}>
+                    S'inspirer de l'annale
+                  </Text>
+                  <Text style={{ marginTop: 4, color: t.muted, fontFamily: t.font.body }}>
+                    L'IA analyse l'annale pour comprendre le style des QCM (sans recopier). Le contenu factuel vient uniquement du cours.
+                  </Text>
+                  <Text style={{ marginTop: 6, color: t.muted, fontFamily: t.font.body, fontSize: 13 }} numberOfLines={1}>
+                    ✅ {selectedExamFile.name}
+                  </Text>
+                </View>
+                <Switch
+                  value={examGuided}
+                  onValueChange={setExamGuided}
+                  trackColor={{ false: t.dark ? "#283039" : "#E5E7EB", true: t.primary }}
+                  thumbColor={"#fff"}
+                />
+              </View>
+
+              {examGuided ? (
+                <>
+                  <View style={[styles.sep, { backgroundColor: t.border }]} />
+                  <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 16 }}>
+                    Niveau d'influence
+                  </Text>
+                  <Text style={{ marginTop: 6, color: t.muted, fontFamily: t.font.body }}>
+                    Ajuste à quel point le style des questions suit les annales.
+                  </Text>
+                  <View style={{ flexDirection: "row", gap: 10, marginTop: 16 }}>
+                    <SegPill label="Faible" active={examInfluence === "low"} onPress={() => setExamInfluence("low")} />
+                    <SegPill label="Moyen" active={examInfluence === "medium"} onPress={() => setExamInfluence("medium")} />
+                    <SegPill label="Fort" active={examInfluence === "high"} onPress={() => setExamInfluence("high")} />
+                  </View>
+                </>
+              ) : null}
+            </Card>
+          </>
+        ) : null}
         {/* Style */}
         <Text style={[styles.sectionTitle, { color: t.muted, fontFamily: t.font.semibold }]}>STYLE</Text>
         <Card>

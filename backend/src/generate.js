@@ -41,6 +41,29 @@ const PlanOnlyOut = z.object({
   plan7d: z.array(z.string().min(1)).max(14),
 });
 
+
+// --- Blueprint d'annales (abstrait) pour guider le style des QCM/flashcards
+const ExamBlueprintOut = z.object({
+  examName: z.string().max(120).optional(),
+  questionFormats: z.array(z.string().min(2).max(120)).min(1).max(15),
+  typicalOptionCount: z
+    .object({
+      min: z.number().int().min(2).max(6),
+      max: z.number().int().min(2).max(6),
+    })
+    .optional(),
+  difficultyMix: z
+    .object({
+      easy: z.number().min(0).max(1),
+      medium: z.number().min(0).max(1),
+      hard: z.number().min(0).max(1),
+    })
+    .optional(),
+  commonTraps: z.array(z.string().min(2).max(140)).max(15).default([]),
+  styleNotes: z.array(z.string().min(2).max(200)).max(15).default([]),
+  topicsToEmphasize: z.array(z.string().min(2).max(120)).max(20).default([]),
+});
+
 // --------------------
 // Utils
 // --------------------
@@ -116,6 +139,58 @@ function uniqByQuestion(items) {
 // --------------------
 // Main
 // --------------------
+
+export async function analyzeExamBlueprint({
+  text,
+  level = "PASS",
+  language = "fr",
+}) {
+  if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY manquante dans .env");
+
+  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+  const clipChars = clampInt(process.env.EXAM_CLIP_CHARS ?? 16000, 2000, 60000);
+  const clipped = (text ?? "").slice(0, clipChars);
+
+  const sys = `
+Tu es un expert en pédagogie médicale et en préparation concours.
+Tu analyses une annale (ou un ensemble de questions) et tu en extrais un **blueprint abstrait**.
+
+Contraintes critiques :
+- INTERDICTION de copier/citer une question, une phrase, ou un passage de l'annale.
+- Ne reproduis aucune formulation spécifique ; pas de verbatim.
+- Pas de suites de mots identiques > 8 mots.
+- Tu dois produire des règles générales et des patterns, pas du contenu.
+- Réponds STRICTEMENT en JSON (Structured Outputs).
+
+Langue cible: ${language.toUpperCase()}
+Niveau: ${level}
+
+
+
+
+`.trim();
+
+  const user = `
+Analyse cette annale et produis un blueprint de style.
+
+INPUT:
+${clipped}
+`.trim();
+
+  const out = await parseStructured({
+    model,
+    schema: ExamBlueprintOut,
+    name: "exam_blueprint",
+    max_output_tokens: 1200,
+    input: [
+      { role: "system", content: sys },
+      { role: "user", content: user },
+    ],
+  });
+
+  return out;
+}
+
 export async function generateDeckFromText({
   text,
   level = "PASS",
@@ -125,6 +200,9 @@ export async function generateDeckFromText({
   medicalStyle = true,
   language = "fr",
   subject,
+  examBlueprint = null,
+  examInfluence = "medium",
+  sourceFilename,
 }) {
   if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY manquante dans .env");
 
@@ -141,6 +219,34 @@ export async function generateDeckFromText({
   console.log(
     `[generate] chars=${(text ?? "").length} clipped=${clipped.length} level=${level} cards=${cardsTarget} mcq=${mcqTarget} planDays=${daysTarget}`
   );
+
+
+  const examInfluenceNorm = ["low", "medium", "high"].includes(String(examInfluence))
+    ? String(examInfluence)
+    : "medium";
+
+  const examModeSection = examBlueprint
+    ? `
+MODE CONCOURS (ANNales)
+
+Tu disposes d'un blueprint abstrait d'annales (pas de verbatim).
+Influence: ${examInfluenceNorm}
+
+Blueprint:
+${JSON.stringify(examBlueprint, null, 2)}
+
+Règles critiques:
+- Le CONTENU factuel doit provenir UNIQUEMENT du cours (texte fourni).
+- L'annale sert à guider le STYLE (formats, pièges, difficulté), pas à fournir des faits.
+- Interdiction de recopier ou paraphraser des questions d'annales.
+- Reformule systématiquement ; pas de formulations spécifiques.
+
+Interprétation de l'influence:
+- low: n'ajuste que légèrement le format des QCM et la manière de piéger.
+- medium: aligne le style et une partie de la distribution (formats/option count).
+- high: aligne fortement le style (formats, pièges, niveau), tout en restant fidèle au cours.
+`.trim()
+    : "";
 
   // ✅ Prompt renforcé (tuteur médecine + concours + précision)
   const sys = `
@@ -175,6 +281,11 @@ Règles de contenu :
 - plan7d = petites actions de révision (ex: “Revoir X”, “Faire 10 cartes sur Y”, “Refaire QCM sur Z”).
 - Le plan doit être réaliste, concret, actionnable.
 - Respect STRICT du schéma JSON demandé (Structured Outputs).
+
+
+
+
+${examModeSection}
 `.trim();
 
   // On donne un contexte clair à l’IA + objectif “exactement N si possible”
@@ -320,6 +431,8 @@ ${clipped}
     createdAt: Date.now(),
     level,
     subject,
+    sourceFilename: sourceFilename ?? null,
+    generationMeta: examBlueprint ? { examGuided: true, examInfluence: examInfluenceNorm } : { examGuided: false },
     cards: cards.slice(0, cardsTarget).map((c) => ({ id: nanoid(), ...c })),
     mcqs: mcqs.slice(0, mcqTarget).map((q) => ({ id: nanoid(), ...q })),
     plan7d: plan7d.slice(0, daysTarget),

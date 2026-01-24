@@ -24,6 +24,11 @@ import * as repo from "../storage/repo";
 import { Deck, QuizAttempt, ReviewRecord } from "../types/models";
 import { supabase } from "./supabaseClient";
 
+// ✅ Protection contre les appels répétés en cas d'erreur
+let lastSyncAttempt = 0;
+let syncInProgress = false;
+const SYNC_COOLDOWN_MS = 5000; // 5 secondes entre les tentatives
+
 /**
  * Structure des données dans le cloud
  */
@@ -42,16 +47,42 @@ export type CloudUserData = {
 /**
  * Upload les données locales vers Supabase
  */
-export async function syncToCloud(userId: string): Promise<{ success: boolean; error?: string }> {
-  if (!userId || userId === "undefined" || userId === "null") {
-    return { success: true };
-  }
+export async function syncToCloud(_userId: string): Promise<{ success: boolean; error?: string }> {
   if (!CLOUD_SYNC_ENABLED) {
     return { success: false, error: "Cloud sync disabled" };
   }
 
+  // ✅ Protection contre les appels répétés
+  const now = Date.now();
+  if (syncInProgress) {
+    return { success: false, error: "Sync already in progress" };
+  }
+  if (now - lastSyncAttempt < SYNC_COOLDOWN_MS) {
+    return { success: false, error: "Sync cooldown active" };
+  }
+
+  syncInProgress = true;
+  lastSyncAttempt = now;
+
   try {
-    // Récupère toutes les données locales
+    // Vérifier d'abord si l'utilisateur est authentifié
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user?.id) {
+      syncInProgress = false;
+      // Ne pas logger en erreur si l'utilisateur n'est simplement pas connecté
+      if (authError?.message?.includes("session") || !user) {
+        return { success: false, error: "Not authenticated" };
+      }
+      throw new Error(authError?.message || "Not authenticated");
+    }
+
+    const uid = user.id;
+
+    // (Optionnel) log diagnostic temporaire
+    // console.log("[cloudSync] uid from session =", uid, "param userId =", _userId);
+
+    // Récupère toutes les données locales...
     const decks = await repo.listDecks();
     const reviewRecords = await repo.getAllReviewRecords();
     const quizAttempts = await repo.getAllQuizAttempts();
@@ -61,7 +92,7 @@ export async function syncToCloud(userId: string): Promise<{ success: boolean; e
     const level = await repo.getLevel();
 
     const cloudData: CloudUserData = {
-      userId,
+      userId: uid, // IMPORTANT : cohérent avec la session
       decks,
       reviewRecords,
       quizAttempts,
@@ -72,23 +103,41 @@ export async function syncToCloud(userId: string): Promise<{ success: boolean; e
       lastSyncAt: Date.now(),
     };
 
-    // Upsert dans Supabase avec la bonne stratégie
     const { error } = await supabase
       .from("user_data")
-      .upsert({ 
-        user_id: userId, 
-        data: cloudData,
-        updated_at: new Date().toISOString(),
-      }, {
-        onConflict: 'user_id', // Spécifie explicitement la colonne de conflit
-      });
+      .upsert(
+        {
+          user_id: uid,           // IMPORTANT : uid (session), pas param
+          data: cloudData,
+          // updated_at: new Date().toISOString(), // optionnel (tu as déjà trigger côté DB)
+        },
+        { onConflict: "user_id" }
+      );
 
     if (error) throw error;
 
+    syncInProgress = false;
     return { success: true };
   } catch (error: any) {
-    console.error("Sync to cloud failed:", error);
-    return { success: false, error: error.message };
+    syncInProgress = false;
+    // ✅ Logging amélioré pour debug
+    const errorMessage = error?.message || String(error);
+    const errorCode = error?.code || error?.status || "unknown";
+    
+    // Ne pas logger en erreur si c'est juste "Not authenticated" (mode local normal)
+    if (errorMessage.includes("Not authenticated") || errorMessage.includes("session")) {
+      // Mode local, pas d'erreur à logger
+      return { success: false, error: "Not authenticated" };
+    }
+    
+    // Logger les vraies erreurs
+    console.error("Sync to cloud failed:", {
+      message: errorMessage,
+      code: errorCode,
+      details: error,
+    });
+    
+    return { success: false, error: errorMessage };
   }
 }
 
@@ -97,36 +146,31 @@ export async function syncToCloud(userId: string): Promise<{ success: boolean; e
  * ⚠️ ATTENTION : Cette fonction remplace complètement les données locales
  * À utiliser uniquement au login ou pour forcer un refresh depuis le cloud
  */
-export async function syncFromCloud(userId: string, replaceLocal: boolean = false): Promise<{ success: boolean; error?: string }> {
-  if (!userId || userId === "undefined" || userId === "null") {
-    return { success: true };
-  }
+export async function syncFromCloud(_userId: string, replaceLocal: boolean = false): Promise<{ success: boolean; error?: string }> {
   if (!CLOUD_SYNC_ENABLED) {
     return { success: false, error: "Cloud sync disabled" };
   }
 
   try {
-    // Récupère les données cloud
+    const uid = await requireSupabaseUserId();
+
     const { data, error } = await supabase
       .from("user_data")
       .select("data")
-      .eq("user_id", userId)
+      .eq("user_id", uid)
       .single();
 
-    if (error && error.code !== "PGRST116") throw error; // PGRST116 = pas de données trouvées
-    
-    if (!data || !data.data) {
-      // Première connexion : upload les données locales
-      return await syncToCloud(userId);
+    if (error && error.code !== "PGRST116") throw error;
+
+    if (!data?.data) {
+      return await syncToCloud(uid);
     }
 
     const cloudData = data.data as CloudUserData;
 
     if (replaceLocal) {
-      // Mode "replace" : remplace complètement les données locales (utilisé au login)
       await replaceLocalData(cloudData);
     } else {
-      // Mode "merge" : merge intelligent (utilisé pour auto-sync)
       await mergeDataToLocal(cloudData);
     }
 
@@ -136,6 +180,7 @@ export async function syncFromCloud(userId: string, replaceLocal: boolean = fals
     return { success: false, error: error.message };
   }
 }
+
 
 /**
  * Remplace complètement les données locales par les données cloud
@@ -183,11 +228,38 @@ async function mergeDataToLocal(cloudData: CloudUserData) {
  * Stratégie : LOCAL → CLOUD (le local est la source de vérité)
  */
 export async function autoSync(userId: string | null): Promise<void> {
+  if (!CLOUD_SYNC_ENABLED) return;
   
-  if (!userId || !CLOUD_SYNC_ENABLED) return;
-
-  // Sync unidirectionnelle : upload les changements locaux vers le cloud
-  // Le local est la source de vérité quand l'utilisateur est actif
-  await syncToCloud(userId);
+  // ✅ Vérifier rapidement si l'utilisateur est authentifié avant d'appeler syncToCloud
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.id) {
+      // Utilisateur non authentifié, ne pas essayer de sync
+      return;
+    }
+  } catch {
+    // Erreur d'auth, ne pas essayer de sync
+    return;
+  }
+  
+  // Appeler syncToCloud (qui a maintenant sa propre protection)
+  const result = await syncToCloud(userId ?? "");
+  
+  // Ne pas logger les erreurs "Not authenticated" (c'est normal en mode local)
+  if (!result.success && result.error !== "Not authenticated" && result.error !== "Sync cooldown active" && result.error !== "Sync already in progress") {
+    console.warn("[autoSync] Sync failed:", result.error);
+  }
 }
 
+
+async function requireSupabaseUserId(): Promise<string> {
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+  if (!user?.id) {
+    throw new Error("Not authenticated (supabase user is null)");
+  }
+  return user.id;
+}

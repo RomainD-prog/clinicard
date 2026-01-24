@@ -1,18 +1,14 @@
+import type { User } from "@supabase/supabase-js";
+import * as Linking from "expo-linking";
 import { supabase } from "./supabaseClient";
 
-// Type pour les erreurs d'authentification
-export type AuthError = {
-  message: string;
-  status?: number;
-};
-
-// Type pour les données utilisateur
+// --- Types ---
 export type AuthUser = {
   id: string;
   email: string;
   createdAt: string;
-  firstName?: string | null;
-  lastName?: string | null;
+  firstName: string | null;
+  lastName: string | null;
 };
 
 export type SignupData = {
@@ -27,55 +23,36 @@ export type LoginData = {
   password: string;
 };
 
-function mapUser(user: any): AuthUser {
-  const md = (user?.user_metadata ?? {}) as Record<string, any>;
-
-  const firstName =
-    (md.firstName ?? md.first_name ?? md.given_name ?? null) as string | null;
-
-  const lastName =
-    (md.lastName ?? md.last_name ?? md.family_name ?? null) as string | null;
-
+// --- Helper ---
+function mapUser(user: User): AuthUser {
+  const md = user.user_metadata ?? {};
   return {
     id: user.id,
     email: user.email ?? "",
-    createdAt: user.created_at ?? "",
-    firstName,
-    lastName,
+    createdAt: user.created_at,
+    firstName: (md.firstName ?? md.first_name ?? md.given_name ?? null) as string | null,
+    lastName: (md.lastName ?? md.last_name ?? md.family_name ?? null) as string | null,
   };
 }
 
-/**
- * Crée un nouveau compte utilisateur
- */
+// --- Auth basique ---
 export async function signup(data: SignupData): Promise<{ user: AuthUser | null; error: string | null }> {
   try {
     const { data: signupData, error } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
       options: {
-        data: {
-          firstName: data.firstName,
-          lastName: data.lastName,
-        },
+        data: { firstName: data.firstName, lastName: data.lastName },
       },
     });
 
-    if (error) {
-      console.error("Erreur signup:", error.message);
-      return { user: null, error: error.message };
-    }
-
+    if (error) return { user: null, error: error.message };
     return { user: signupData.user ? mapUser(signupData.user) : null, error: null };
-  } catch (err) {
-    console.error("Erreur signup:", err);
+  } catch {
     return { user: null, error: "Une erreur inattendue s'est produite" };
   }
 }
 
-/**
- * Connexion utilisateur
- */
 export async function login(data: LoginData): Promise<{ user: AuthUser | null; error: string | null }> {
   try {
     const { data: loginData, error } = await supabase.auth.signInWithPassword({
@@ -83,138 +60,150 @@ export async function login(data: LoginData): Promise<{ user: AuthUser | null; e
       password: data.password,
     });
 
-    if (error) {
-      console.error("Erreur login:", error.message);
-      return { user: null, error: error.message };
-    }
-
+    if (error) return { user: null, error: error.message };
     return { user: loginData.user ? mapUser(loginData.user) : null, error: null };
-  } catch (err) {
-    console.error("Erreur login:", err);
-    return { user: null, error: "Une erreur inattendue s'est produite" };
+  } catch {
+    return { user: null, error: "Une erreur inattendue" };
   }
 }
 
-/**
- * Déconnexion utilisateur
- */
 export async function logout(): Promise<{ error: string | null }> {
-  try {
-    const { error } = await supabase.auth.signOut();
-
-    if (error) {
-      console.error("Erreur logout:", error.message);
-      return { error: error.message };
-    }
-
-    return { error: null };
-  } catch (err) {
-    console.error("Erreur logout:", err);
-    return { error: "Une erreur inattendue s'est produite" };
-  }
+  const { error } = await supabase.auth.signOut();
+  return { error: error?.message ?? null };
 }
 
-/**
- * Récupère l'utilisateur connecté actuellement
- */
-
-/**
- * Récupère l'utilisateur connecté actuellement
- */
 export async function getCurrentUser(): Promise<{ user: AuthUser | null; error: string | null }> {
   try {
-    // 1) Vérifie s'il y a une session (sinon ne pas appeler getUser)
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-
-    if (sessionError) {
-      console.error("Erreur getSession:", sessionError);
-      return { user: null, error: "Impossible de récupérer la session" };
-    }
-
-    const session = sessionData?.session;
-    if (!session) {
-      // pas connecté
-      return { user: null, error: null };
-    }
-
-    // 2) Maintenant seulement on peut récupérer le user
-    const { data, error } = await supabase.auth.getUser();
-
-    if (error) {
-      // Ne pas throw : on renvoie une erreur propre
-      console.error("Erreur getUser:", error);
-      return { user: null, error: "Impossible de récupérer l'utilisateur" };
-    }
-
-    if (!data.user) {
-      return { user: null, error: null };
-    }
-
-    return { user: mapUser(data.user), error: null };
-  } catch (err) {
-    console.error("Erreur getCurrentUser:", err);
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error || !user) return { user: null, error: error?.message ?? null };
+    return { user: mapUser(user), error: null };
+  } catch {
     return { user: null, error: "Impossible de récupérer l'utilisateur" };
   }
 }
 
-/**
- * Vérifie si un utilisateur est connecté
- */
 export async function isLoggedIn(): Promise<boolean> {
+  const { data } = await supabase.auth.getSession();
+  return !!data.session;
+}
+
+// -----------------------------------------------------------------------------
+// RESET PASSWORD (Mot de passe oublié)
+// -----------------------------------------------------------------------------
+
+/**
+ * C’est CE lien qui doit être autorisé dans Supabase -> Auth -> URL Configuration -> Redirect URLs
+ * - Expo Go: exp://.../--/auth/reset
+ * - Dev build/prod: medflash://auth/reset
+ */
+export function getResetRedirectTo(): string {
+  // Important: route expo-router => app/auth/reset.tsx
+  return Linking.createURL("auth/reset");
+}
+
+/**
+ * 1) Envoie l’email de reset.
+ */
+export async function requestPasswordReset(email: string): Promise<{ error: string | null }> {
   try {
-    const { data } = await supabase.auth.getSession();
-    return !!data.session;
-  } catch (err) {
-    console.error("Erreur isLoggedIn:", err);
-    return false;
+    const redirectTo = getResetRedirectTo();
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    return { error: error?.message ?? null };
+  } catch (e: any) {
+    return { error: e?.message ?? "Impossible d'envoyer l'email de réinitialisation." };
   }
 }
 
 /**
- * Change le mot de passe de l'utilisateur connecté
+ * Parse query + hash (pour supporter ?code=... et #access_token=...)
  */
-export async function changePassword(newPassword: string): Promise<{ error: string | null }> {
+function parseUrlParams(url: string): Record<string, string> {
   try {
-    const { error } = await supabase.auth.updateUser({
-      password: newPassword,
-    });
+    const out: Record<string, string> = {};
+    const qIndex = url.indexOf("?");
+    const hIndex = url.indexOf("#");
+    const query = qIndex >= 0 ? url.slice(qIndex + 1, hIndex >= 0 ? hIndex : undefined) : "";
+    const hash = hIndex >= 0 ? url.slice(hIndex + 1) : "";
 
-    if (error) {
-      console.error("Erreur changePassword:", error.message);
-      return { error: error.message };
+    const add = (s: string) => {
+      if (!s) return;
+      for (const part of s.split("&")) {
+        if (!part) continue;
+        const [k, v = ""] = part.split("=");
+        if (!k) continue;
+        out[decodeURIComponent(k)] = decodeURIComponent(v);
+      }
+    };
+
+    add(query);
+    add(hash);
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * 2) Quand l’utilisateur clique le lien, l’app reçoit un deep link.
+ * On initialise la session recovery (indispensable avant updateUser(password)).
+ */
+export async function setRecoverySessionFromUrl(url: string): Promise<{ error: string | null }> {
+  try {
+    if (!url) return { error: "URL manquante" };
+
+    const p = parseUrlParams(url);
+
+    // PKCE code flow (le plus courant)
+    if (p.code) {
+      const { error } = await supabase.auth.exchangeCodeForSession(url);
+      return { error: error?.message ?? null };
     }
 
-    return { error: null };
-  } catch (err) {
-    console.error("Erreur changePassword:", err);
-    return { error: "Une erreur inattendue s'est produite" };
+    // Implicit tokens (plus rare)
+    if (p.access_token && p.refresh_token) {
+      const { error } = await supabase.auth.setSession({
+        access_token: p.access_token,
+        refresh_token: p.refresh_token,
+      });
+      return { error: error?.message ?? null };
+    }
+
+    return { error: "Lien invalide (tokens/code manquants). Vérifie les Redirect URLs dans Supabase." };
+  } catch (e: any) {
+    return { error: e?.message ?? "Impossible d'initialiser la session de récupération." };
   }
 }
 
 /**
- * Supprime le compte utilisateur (et ses données)
+ * 3) Une fois la session recovery prête, on peut changer le mot de passe.
  */
+export async function updatePasswordFromRecovery(newPassword: string): Promise<{ error: string | null }> {
+  try {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    return { error: error?.message ?? null };
+  } catch (e: any) {
+    return { error: e?.message ?? "Impossible de modifier le mot de passe." };
+  }
+}
+
+// (optionnel) si tu veux garder cette API existante :
+export async function changePassword(newPassword: string): Promise<{ error: string | null }> {
+  return updatePasswordFromRecovery(newPassword);
+}
+
+// --- deleteAccount (inchangé) ---
 export async function deleteAccount(): Promise<{ error: string | null }> {
   try {
-    // NOTE: suppression user côté serveur via service role / edge function en prod.
-    const { data: session } = await supabase.auth.getSession();
-    const userId = session.session?.user.id;
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user.id;
     if (!userId) return { error: "Utilisateur non connecté" };
 
-    const { error } = await supabase
-      .from("user_data")
-      .delete()
-      .eq("user_id", userId);
-
-    if (error) {
-      console.error("Erreur deleteAccount user_data:", error.message);
-      return { error: error.message };
-    }
+    const { error: dbError } = await supabase.from("user_data").delete().eq("user_id", userId);
+    if (dbError) throw dbError;
 
     await logout();
     return { error: null };
-  } catch (err) {
-    console.error("Erreur deleteAccount:", err);
-    return { error: "Une erreur inattendue s'est produite" };
+  } catch (err: any) {
+    return { error: err.message || "Erreur lors de la suppression" };
   }
 }
