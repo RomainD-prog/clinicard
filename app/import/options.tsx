@@ -1,20 +1,23 @@
 // app/import/options.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  Modal,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Switch,
   Text,
   TextInput,
-  View
+  View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+
 
 import * as api from "../../src/services/api";
+import * as repo from "../../src/storage/repo";
 import { useAppStore } from "../../src/store/useAppStore";
 import type { GenerationOptions } from "../../src/types/models";
 import { useStitchTheme } from "../../src/uiStitch/theme";
@@ -106,7 +109,7 @@ export default function ImportOptionsScreen() {
   const router = useRouter();
   const t = useStitchTheme();
 
-  const { selectedFile, level, freeImportsRemaining, creditsBalance, decks, isSubscribed } = useAppStore();
+  const { selectedFile, selectedExamFile, level, freeImportsRemaining, creditsBalance, decks, isSubscribed, categories, createCategory, refreshCategories } = useAppStore();
 
   const filename = selectedFile?.name ?? "—";
   const canGenerate = !!selectedFile;
@@ -117,10 +120,32 @@ export default function ImportOptionsScreen() {
   // ✅ L'IA décide du nombre de cartes selon le contenu
   const [intensity, setIntensity] = useState<"light" | "standard" | "max">("standard");
 
+  // ✅ Mode concours (annales)
+  const [examGuided, setExamGuided] = useState<boolean>(!!selectedExamFile);
+  const [examInfluence, setExamInfluence] = useState<"low" | "medium" | "high">("medium");
+
   const [planDays, setPlanDays] = useState(7);
   const [medicalStyle, setMedicalStyle] = useState(true);
 
+  // Dossier (catégorie)
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [folderOpen, setFolderOpen] = useState(false);
+  const [createFolderOpen, setCreateFolderOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    refreshCategories().catch(() => null);
+  }, [refreshCategories]);
+
+  useEffect(() => {
+    if (!selectedExamFile) setExamGuided(false);
+  }, [selectedExamFile]);
+
+  useEffect(() => {
+    refreshCategories().catch(() => null);
+  }, [refreshCategories]);
 
   // Récupérer toutes les matières uniques des decks existants
   const existingSubjects = useMemo(() => {
@@ -145,6 +170,20 @@ export default function ImportOptionsScreen() {
   function goBackSmart() {
     if (router.canGoBack()) router.back();
     else router.replace("/import");
+  }
+
+  async function submitCreateFolder() {
+    const name = newFolderName.trim();
+    if (!name) return;
+    try {
+      const cat = await createCategory(name);
+      setCategoryId(cat.id);
+      setNewFolderName("");
+      setCreateFolderOpen(false);
+      setFolderOpen(false);
+    } catch (e: any) {
+      Alert.alert("Erreur", e?.message ?? "Impossible de créer le dossier.");
+    }
   }
 
   async function onGenerate() {
@@ -183,10 +222,28 @@ export default function ImportOptionsScreen() {
       (opts as any).autoCounts = true;
       (opts as any).intensity = intensity;
 
+      // ✅ Mode concours (si annale fournie)
+      (opts as any).examGuided = Boolean(examGuided && selectedExamFile);
+      (opts as any).examInfluence = examInfluence;
+
+      // ✅ Dossier (local only)
+      (opts as any).categoryId = categoryId ?? null;
+
       const { jobId } = await api.startGeneration(
         { uri: selectedFile.uri, name: selectedFile.name, mimeType: selectedFile.mimeType, size: selectedFile.size },
-        opts
+        opts,
+        (examGuided && selectedExamFile) ? { uri: selectedExamFile.uri, name: selectedExamFile.name, mimeType: selectedExamFile.mimeType, size: selectedExamFile.size } : undefined
       );
+
+      // ✅ On garde les options côté app (utile pour patcher le deck au retour)
+      await repo.saveJob({
+        jobId,
+        status: "processing",
+        progress: 0.02,
+        createdAt: Date.now(),
+        options: opts,
+        sourceFilename: selectedFile.name,
+      });
 
       router.replace(`/job/${jobId}`);
     } catch (e: any) {
@@ -196,7 +253,7 @@ export default function ImportOptionsScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={styles.topBar}>
         <Pressable onPress={goBackSmart} style={styles.iconBtn} hitSlop={10}>
           <Ionicons name="chevron-back" size={22} color={t.text} />
@@ -237,6 +294,37 @@ export default function ImportOptionsScreen() {
               <Text style={{ color: t.text, fontFamily: t.font.display }}>Crédits: {creditsBalance}</Text>
             </View>
           </View>
+        </Card>
+
+        {/* Dossier */}
+        <Text style={[styles.sectionTitle, { color: t.muted, fontFamily: t.font.semibold }]}>DOSSIER</Text>
+        <Card>
+          <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 16 }}>
+            Classe ton deck
+          </Text>
+          <Text style={{ marginTop: 6, color: t.muted, fontFamily: t.font.body }}>
+            Exemple : UE10, Biomécanique… (optionnel)
+          </Text>
+
+          <Pressable
+            onPress={() => setFolderOpen(true)}
+            style={({ pressed }) => [
+              styles.pickerRow,
+              {
+                backgroundColor: t.dark ? "#161a20" : "#F8FAFC",
+                borderColor: t.border,
+                opacity: pressed ? 0.9 : 1,
+              },
+            ]}
+          >
+            <Ionicons name="folder-outline" size={18} color={t.muted} />
+            <Text style={{ flex: 1, color: t.text, fontFamily: t.font.body, fontSize: 15 }} numberOfLines={1}>
+              {categoryId
+                ? (categories.find((c) => c.id === categoryId)?.name ?? "Dossier")
+                : "Sans dossier"}
+            </Text>
+            <Ionicons name="chevron-forward" size={18} color={t.muted} />
+          </Pressable>
         </Card>
 
         {/* Matière */}
@@ -367,6 +455,52 @@ export default function ImportOptionsScreen() {
           </View>
         </Card>
 
+
+
+        {/* Mode concours (annales) */}
+        {selectedExamFile ? (
+          <>
+            <Text style={[styles.sectionTitle, { color: t.muted, fontFamily: t.font.semibold }]}>MODE CONCOURS</Text>
+            <Card>
+              <View style={[styles.row, { borderColor: t.border, alignItems: "center" }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 16 }}>
+                    S'inspirer de l'annale
+                  </Text>
+                  <Text style={{ marginTop: 4, color: t.muted, fontFamily: t.font.body }}>
+                    L'IA analyse l'annale pour comprendre le style des QCM (sans recopier). Le contenu factuel vient uniquement du cours.
+                  </Text>
+                  <Text style={{ marginTop: 6, color: t.muted, fontFamily: t.font.body, fontSize: 13 }} numberOfLines={1}>
+                    ✅ {selectedExamFile.name}
+                  </Text>
+                </View>
+                <Switch
+                  value={examGuided}
+                  onValueChange={setExamGuided}
+                  trackColor={{ false: t.dark ? "#283039" : "#E5E7EB", true: t.primary }}
+                  thumbColor={"#fff"}
+                />
+              </View>
+
+              {examGuided ? (
+                <>
+                  <View style={[styles.sep, { backgroundColor: t.border }]} />
+                  <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 16 }}>
+                    Niveau d'influence
+                  </Text>
+                  <Text style={{ marginTop: 6, color: t.muted, fontFamily: t.font.body }}>
+                    Ajuste à quel point le style des questions suit les annales.
+                  </Text>
+                  <View style={{ flexDirection: "row", gap: 10, marginTop: 16 }}>
+                    <SegPill label="Faible" active={examInfluence === "low"} onPress={() => setExamInfluence("low")} />
+                    <SegPill label="Moyen" active={examInfluence === "medium"} onPress={() => setExamInfluence("medium")} />
+                    <SegPill label="Fort" active={examInfluence === "high"} onPress={() => setExamInfluence("high")} />
+                  </View>
+                </>
+              ) : null}
+            </Card>
+          </>
+        ) : null}
         {/* Style */}
         <Text style={[styles.sectionTitle, { color: t.muted, fontFamily: t.font.semibold }]}>STYLE</Text>
         <Card>
@@ -424,6 +558,97 @@ export default function ImportOptionsScreen() {
           </Text>
         ) : null}
       </ScrollView>
+
+      {/* Folder Picker */}
+      <Modal transparent visible={folderOpen} animationType="fade" onRequestClose={() => setFolderOpen(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setFolderOpen(false)}>
+          <Pressable style={[styles.modalCard, { backgroundColor: t.card, borderColor: t.border }]} onPress={() => null}>
+            <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 16 }}>Choisir un dossier</Text>
+            <Text style={{ marginTop: 6, color: t.muted, fontFamily: t.font.body }}>Optionnel</Text>
+
+            <View style={{ marginTop: 12, gap: 8 }}>
+              <Pressable
+                onPress={() => {
+                  setCategoryId(null);
+                  setFolderOpen(false);
+                }}
+                style={({ pressed }) => [
+                  styles.pickRow,
+                  { borderColor: t.border, opacity: pressed ? 0.85 : 1 },
+                ]}
+              >
+                <Ionicons name="folder-open-outline" size={18} color={t.muted} />
+                <Text style={{ flex: 1, color: t.text, fontFamily: t.font.medium }}>Sans dossier</Text>
+              </Pressable>
+
+              {(categories ?? []).map((c) => (
+                <Pressable
+                  key={c.id}
+                  onPress={() => {
+                    setCategoryId(c.id);
+                    setFolderOpen(false);
+                  }}
+                  style={({ pressed }) => [
+                    styles.pickRow,
+                    { borderColor: t.border, opacity: pressed ? 0.85 : 1 },
+                  ]}
+                >
+                  <Ionicons name="folder-outline" size={18} color={t.muted} />
+                  <Text style={{ flex: 1, color: t.text, fontFamily: t.font.medium }}>{c.name}</Text>
+                </Pressable>
+              ))}
+            </View>
+
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
+              <Pressable
+                onPress={() => setFolderOpen(false)}
+                style={({ pressed }) => [styles.modalBtn, { backgroundColor: t.dark ? "#1c2127" : "#fff", borderColor: t.border, opacity: pressed ? 0.85 : 1 }]}
+              >
+                <Text style={{ color: t.text, fontFamily: t.font.display }}>Fermer</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setCreateFolderOpen(true)}
+                style={({ pressed }) => [styles.modalBtn, { backgroundColor: t.primary, borderColor: t.primary, opacity: pressed ? 0.85 : 1 }]}
+              >
+                <Text style={{ color: "#fff", fontFamily: t.font.display }}>Nouveau</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Create Folder */}
+      <Modal transparent visible={createFolderOpen} animationType="fade" onRequestClose={() => setCreateFolderOpen(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setCreateFolderOpen(false)}>
+          <Pressable style={[styles.modalCard, { backgroundColor: t.card, borderColor: t.border }]} onPress={() => null}>
+            <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 16 }}>Nouveau dossier</Text>
+            <Text style={{ marginTop: 6, color: t.muted, fontFamily: t.font.body }}>Exemple : UE10, Anatomie…</Text>
+            <View style={{ marginTop: 12 }}>
+              <TextInput
+                value={newFolderName}
+                onChangeText={setNewFolderName}
+                placeholder="Nom du dossier"
+                placeholderTextColor={t.muted}
+                style={[styles.modalInput, { color: t.text, borderColor: t.border, fontFamily: t.font.body }]}
+              />
+            </View>
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
+              <Pressable
+                onPress={() => setCreateFolderOpen(false)}
+                style={({ pressed }) => [styles.modalBtn, { backgroundColor: t.dark ? "#1c2127" : "#fff", borderColor: t.border, opacity: pressed ? 0.85 : 1 }]}
+              >
+                <Text style={{ color: t.text, fontFamily: t.font.display }}>Annuler</Text>
+              </Pressable>
+              <Pressable
+                onPress={submitCreateFolder}
+                style={({ pressed }) => [styles.modalBtn, { backgroundColor: t.primary, borderColor: t.primary, opacity: pressed ? 0.85 : 1 }]}
+              >
+                <Text style={{ color: "#fff", fontFamily: t.font.display }}>Créer</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -540,5 +765,52 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
+  },
+
+  pickerRow: {
+    marginTop: 12,
+    height: 52,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    padding: 18,
+    justifyContent: "center",
+  },
+  modalCard: {
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 16,
+  },
+  modalInput: {
+    height: 48,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    fontSize: 15,
+  },
+  modalBtn: {
+    flex: 1,
+    height: 46,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pickRow: {
+    height: 46,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
 });

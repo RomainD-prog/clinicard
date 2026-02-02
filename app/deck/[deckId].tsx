@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Alert, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import * as Clipboard from "expo-clipboard";
@@ -301,35 +301,39 @@ export default function DeckScreen() {
 
           <View style={{ height: 10 }} />
 
+          {/* ✅ boutons clairement cliquables + chevron */}
           <View style={{ flexDirection: "row", gap: 10 }}>
             <Pressable
               onPress={() => router.push(`/deck/${deck.id}/quiz`)}
               style={({ pressed }) => [
-                styles.secondaryBtn,
+                styles.navBtn,
                 {
                   backgroundColor: t.dark ? "#1c2127" : "#fff",
                   borderColor: t.dark ? "#2a3440" : "#E5E7EB",
-                  opacity: pressed ? 0.9 : 1,
+                  opacity: pressed ? 0.92 : 1,
                 },
               ]}
             >
-              <Ionicons name="help-circle-outline" size={18} color={t.text} />
-              <Text style={{ color: t.text, fontFamily: t.font.display }}>QCM</Text>
+              {/* ✅ icône QCM (plus “assistance”) */}
+              <Ionicons name="list-circle-outline" size={20} color={t.text} />
+              <Text style={{ flex: 1, color: t.text, fontFamily: t.font.display, fontSize: 15 }}>QCM</Text>
+              <Ionicons name="chevron-forward" size={18} color={t.muted} />
             </Pressable>
 
             <Pressable
               onPress={() => router.push(`/deck/${deck.id}/stats`)}
               style={({ pressed }) => [
-                styles.secondaryBtn,
+                styles.navBtn,
                 {
                   backgroundColor: t.dark ? "#1c2127" : "#fff",
                   borderColor: t.dark ? "#2a3440" : "#E5E7EB",
-                  opacity: pressed ? 0.9 : 1,
+                  opacity: pressed ? 0.92 : 1,
                 },
               ]}
             >
-              <Ionicons name="bar-chart-outline" size={18} color={t.text} />
-              <Text style={{ color: t.text, fontFamily: t.font.display }}>Stats</Text>
+              <Ionicons name="bar-chart-outline" size={20} color={t.text} />
+              <Text style={{ flex: 1, color: t.text, fontFamily: t.font.display, fontSize: 15 }}>Stats</Text>
+              <Ionicons name="chevron-forward" size={18} color={t.muted} />
             </Pressable>
           </View>
         </View>
@@ -364,6 +368,7 @@ export default function DeckScreen() {
                 <Text style={{ color: t.dark ? "#E6EDF5" : "#1D4ED8", fontFamily: t.font.display }}>
                   Cartes
                 </Text>
+                <Ionicons name="chevron-forward" size={16} color={t.dark ? "#E6EDF5" : "#1D4ED8"} />
               </Pressable>
             </View>
           </View>
@@ -387,7 +392,6 @@ export default function DeckScreen() {
             </View>
           </View>
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -464,15 +468,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 10,
   },
-  secondaryBtn: {
+
+  // ✅ boutons de navigation (QCM/Stats)
+  navBtn: {
     flex: 1,
     height: 52,
     borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+    gap: 10,
   },
 
   section: {
@@ -487,7 +494,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
     gap: 8,
   },
 });

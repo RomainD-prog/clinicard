@@ -1,235 +1,282 @@
-/**
- * Écran d'Inscription
- * 
- * Permet à un nouvel utilisateur de créer un compte avec email/password.
- * 
- * FONCTIONNEMENT :
- * - Formulaire avec email + password + confirmation
- * - Validation : email valide, password >= 6 caractères, passwords identiques
- * - Appelle authService.signup() pour créer le compte
- * - Upload automatiquement les données locales vers le cloud
- * - En cas de succès : redirige vers l'app principale
- * 
- * IMPACT :
- * - Les données locales sont migrées vers le cloud
- * - L'utilisateur peut maintenant accéder à ses cours depuis n'importe où
- * - Backup automatique de tous les decks et progrès
- */
-
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from "react-native";
-import { CardShell } from "../../src/components/CardShell";
-import { PrimaryButton } from "../../src/components/PrimaryButton";
+
 import * as authService from "../../src/services/authService";
 import * as repo from "../../src/storage/repo";
 import { useAppStore } from "../../src/store/useAppStore";
+import { TopBar } from "../../src/uiStitch/TopBar";
+import { useStitchTheme } from "../../src/uiStitch/theme";
 
 export default function SignupScreen() {
   const router = useRouter();
-  const { setAuthUser, syncUserData, refreshDecks, refreshReviewStats } = useAppStore();
-  
+  const t = useStitchTheme();
+  const { setAuthUser, syncUserData } = useAppStore();
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+
   const [loading, setLoading] = useState(false);
 
-  const handleSignup = async () => {
-    // Validation
-    if (!email.trim() || !password.trim() || !confirmPassword.trim()) {
-      Alert.alert("Erreur", "Merci de remplir tous les champs");
-      return;
-    }
+  const canSubmit = useMemo(() => {
+    const fn = firstName.trim();
+    const ln = lastName.trim();
+    const e = email.trim();
+    return fn.length >= 2 && ln.length >= 2 && e.includes("@") && password.length >= 6;
+  }, [firstName, lastName, email, password]);
 
-    if (password.length < 6) {
-      Alert.alert("Erreur", "Le mot de passe doit faire au moins 6 caractères");
-      return;
-    }
+  async function onSignup() {
+    if (!canSubmit || loading) return;
 
-    if (password !== confirmPassword) {
-      Alert.alert("Erreur", "Les mots de passe ne correspondent pas");
-      return;
-    }
+    try {
+      setLoading(true);
 
-    setLoading(true);
-    const { user, error } = await authService.signup({ email: email.trim(), password });
-    setLoading(false);
+      const { user, error } = await authService.signup({
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        password,
+      });
 
-    if (error) {
-      Alert.alert("Erreur d'inscription", error);
-      return;
-    }
+      if (error || !user) {
+        Alert.alert("Inscription impossible", error ?? "Réessaie dans un instant.");
+        return;
+      }
 
-    if (user) {
-      // ✅ Définir l'utilisateur authentifié comme utilisateur actuel
       await repo.setCurrentAuthUserId(user.id);
       setAuthUser(user);
-      
-      // ✅ Upload les données locales vers le cloud
       await syncUserData(user.id);
-      await refreshDecks();
-      await refreshReviewStats();
-      
-      Alert.alert(
-        "Compte créé ! 🎉",
-        "Tes données locales ont été sauvegardées dans le cloud. Tu peux maintenant y accéder depuis n'importe quel appareil.",
-        [{ text: "OK", onPress: () => router.replace("/(tabs)") }]
-      );
+
+      router.replace("/(tabs)");
+    } catch (e: any) {
+      Alert.alert("Erreur", e?.message ?? "Impossible de créer le compte.");
+    } finally {
+      setLoading(false);
     }
-  };
+  }
+
+
+  async function onGoogle() {
+    if (loading) return;
+
+    try {
+      setLoading(true);
+
+      const { user, error } = await authService.signInWithGoogle();
+
+      if (error) {
+        Alert.alert("Connexion Google impossible", error);
+        return;
+      }
+
+      // Web: full redirect (no user returned here). Native: user returned after exchange.
+      if (!user) return;
+
+      await repo.setCurrentAuthUserId(user.id);
+      setAuthUser(user);
+      await syncUserData(user.id);
+
+      router.replace("/(tabs)");
+    } catch (e: any) {
+      Alert.alert("Erreur", e?.message ?? "Impossible de se connecter avec Google.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.container}
-      >
-        <View style={styles.header}>
-          <Text style={styles.title}>Créer un compte</Text>
-          <Text style={styles.subtitle}>Sauvegarde tes cours dans le cloud ☁️</Text>
-        </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
+      <TopBar title="Créer un compte" variant="small" showBack onBack={() => router.back()} />
 
-        <CardShell title="">
-          <View style={styles.form}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="ton@email.com"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!loading}
-            />
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
+          <View style={[styles.card, { backgroundColor: t.card, borderColor: t.border }]}>
+            <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+              <View style={[styles.heroIcon, { backgroundColor: "rgba(19,127,236,0.12)" }]}>
+                <Ionicons name="person-add-outline" size={20} color={t.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 16 }}>Bienvenue 👋</Text>
+                <Text style={{ marginTop: 4, color: t.muted, fontFamily: t.font.body }}>
+                  On a besoin de ton nom/prénom pour personnaliser ton espace (initiales, etc.).
+                </Text>
+              </View>
+            </View>
 
-            <Text style={styles.label}>Mot de passe</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Au moins 6 caractères"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!loading}
-            />
+            <View style={{ height: 14 }} />
 
-            <Text style={styles.label}>Confirme ton mot de passe</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Retape ton mot de passe"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!loading}
-            />
+            <Text style={[styles.label, { color: t.muted, fontFamily: t.font.semibold }]}>PRÉNOM</Text>
+            <View style={[styles.inputWrap, { backgroundColor: t.dark ? "#161a20" : "#F8FAFC", borderColor: t.border }]}>
+              <Ionicons name="person-outline" size={18} color={t.muted} />
+              <TextInput
+                value={firstName}
+                onChangeText={setFirstName}
+                placeholder="Prénom"
+                placeholderTextColor={t.muted}
+                style={{ flex: 1, color: t.text, fontFamily: t.font.body, fontSize: 15 }}
+              />
+            </View>
 
-            <View style={{ height: 16 }} />
+            <View style={{ height: 12 }} />
 
-            {loading ? (
-              <ActivityIndicator size="large" color="#4F46E5" />
-            ) : (
-              <>
-                <PrimaryButton title="Créer mon compte" onPress={handleSignup} />
-                <View style={{ height: 12 }} />
-                <TouchableOpacity onPress={() => router.push("/auth/login")}>
-                  <Text style={styles.linkText}>
-                    Déjà un compte ? <Text style={styles.linkBold}>Se connecter</Text>
-                  </Text>
-                </TouchableOpacity>
-                <View style={{ height: 12 }} />
-                <TouchableOpacity onPress={() => router.back()}>
-                  <Text style={styles.linkText}>Retour</Text>
-                </TouchableOpacity>
-              </>
-            )}
+            <Text style={[styles.label, { color: t.muted, fontFamily: t.font.semibold }]}>NOM</Text>
+            <View style={[styles.inputWrap, { backgroundColor: t.dark ? "#161a20" : "#F8FAFC", borderColor: t.border }]}>
+              <Ionicons name="person-outline" size={18} color={t.muted} />
+              <TextInput
+                value={lastName}
+                onChangeText={setLastName}
+                placeholder="Nom"
+                placeholderTextColor={t.muted}
+                style={{ flex: 1, color: t.text, fontFamily: t.font.body, fontSize: 15 }}
+              />
+            </View>
+
+            <View style={{ height: 12 }} />
+
+            <Text style={[styles.label, { color: t.muted, fontFamily: t.font.semibold }]}>EMAIL</Text>
+            <View style={[styles.inputWrap, { backgroundColor: t.dark ? "#161a20" : "#F8FAFC", borderColor: t.border }]}>
+              <Ionicons name="mail-outline" size={18} color={t.muted} />
+              <TextInput
+                value={email}
+                onChangeText={setEmail}
+                placeholder="toi@exemple.com"
+                placeholderTextColor={t.muted}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                style={{ flex: 1, color: t.text, fontFamily: t.font.body, fontSize: 15 }}
+              />
+            </View>
+
+            <View style={{ height: 12 }} />
+
+            <Text style={[styles.label, { color: t.muted, fontFamily: t.font.semibold }]}>MOT DE PASSE</Text>
+            <View style={[styles.inputWrap, { backgroundColor: t.dark ? "#161a20" : "#F8FAFC", borderColor: t.border }]}>
+              <Ionicons name="lock-closed-outline" size={18} color={t.muted} />
+              <TextInput
+                value={password}
+                onChangeText={setPassword}
+                placeholder="6 caractères minimum"
+                placeholderTextColor={t.muted}
+                secureTextEntry
+                style={{ flex: 1, color: t.text, fontFamily: t.font.body, fontSize: 15 }}
+              />
+            </View>
+
+            <Pressable
+              onPress={onSignup}
+              disabled={!canSubmit || loading}
+              style={({ pressed }) => [
+                styles.cta,
+                { backgroundColor: t.primary, opacity: !canSubmit || loading ? 0.45 : pressed ? 0.9 : 1 },
+              ]}
+            >
+              <Text style={{ color: "#fff", fontFamily: t.font.display, fontSize: 16 }}>
+                {loading ? "Création…" : "Créer le compte"}
+              </Text>
+              <Ionicons name="arrow-forward-outline" size={18} color="#fff" />
+            </Pressable>
+
+            <View style={styles.orRow}>
+              <View style={[styles.orLine, { backgroundColor: t.border }]} />
+              <Text style={{ color: t.muted, fontFamily: t.font.medium, fontSize: 12 }}>OU</Text>
+              <View style={[styles.orLine, { backgroundColor: t.border }]} />
+            </View>
+
+            <Pressable
+              onPress={onGoogle}
+              disabled={loading}
+              style={({ pressed }) => [
+                styles.oauthBtn,
+                {
+                  borderColor: t.border,
+                  backgroundColor: t.card,
+                  opacity: loading ? 0.6 : pressed ? 0.9 : 1,
+                },
+              ]}
+            >
+              <Ionicons name="logo-google" size={18} color={t.text} />
+              <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 15 }}>
+                Continuer avec Google
+              </Text>
+            </Pressable>
           </View>
-        </CardShell>
 
-        <View style={styles.info}>
-          <Text style={styles.infoText}>
-            💡 En créant un compte, tes cours et ton progrès seront sauvegardés dans le cloud.
-            Tu pourras y accéder depuis n'importe quel appareil.
-          </Text>
-        </View>
+          <View style={{ marginTop: 14, alignItems: "center", gap: 6 }}>
+            <Text style={{ color: t.muted, fontFamily: t.font.body }}>Déjà un compte ?</Text>
+            <Text onPress={() => router.replace("/auth/login")} style={{ color: t.primary, fontFamily: t.font.semibold }}>
+              Se connecter
+            </Text>
+          </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: "#F9FAFB",
-  },
-  container: {
-    flex: 1,
+  card: {
+    borderRadius: 22,
+    borderWidth: StyleSheet.hairlineWidth,
     padding: 16,
+    gap: 8,
   },
-  header: {
-    marginBottom: 24,
+  heroIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  title: {
-    fontSize: 28,
-    fontWeight: "900",
-    color: "#111827",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#6B7280",
-    marginTop: 4,
-  },
-  form: {
-    gap: 12,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#374151",
-    marginBottom: -8,
-  },
-  input: {
-    backgroundColor: "#FFF",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 8,
+  label: { fontSize: 12, letterSpacing: 1, marginLeft: 2 },
+  inputWrap: {
+    marginTop: 8,
+    height: 52,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
-  linkText: {
-    color: "#6B7280",
-    fontSize: 14,
-    textAlign: "center",
+  orRow: {
+    marginTop: 14,
+    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
-  linkBold: {
-    color: "#4F46E5",
-    fontWeight: "600",
+  orLine: { flex: 1, height: StyleSheet.hairlineWidth },
+  oauthBtn: {
+    height: 52,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
   },
-  info: {
+
+  cta: {
     marginTop: 16,
-    padding: 16,
-    backgroundColor: "#EEF2FF",
-    borderRadius: 8,
-  },
-  infoText: {
-    fontSize: 13,
-    color: "#4338CA",
-    lineHeight: 18,
+    height: 56,
+    borderRadius: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
   },
 });
-

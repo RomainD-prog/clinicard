@@ -1,22 +1,27 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActionSheetIOS,
+  Alert,
   FlatList,
+  Modal,
+  Platform,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import * as repo from "../../src/storage/repo";
 import { useAppStore } from "../../src/store/useAppStore";
-import { Deck } from "../../src/types/models";
+import { Category, Deck } from "../../src/types/models";
 import { useStitchTheme } from "../../src/uiStitch/theme";
 import { computeDeckStats, pct } from "../../src/utils/stats";
+import { userInitials } from "../../src/utils/user";
 
 type DeckRow = {
   deck: Deck;
@@ -85,16 +90,7 @@ const FALLBACK_ICONS: IoniconName[] = [
   "planet-outline",
 ];
 
-const FALLBACK_COLORS = [
-  "#3b82f6",
-  "#22c55e",
-  "#f59e0b",
-  "#a855f7",
-  "#06b6d4",
-  "#ef4444",
-  "#f97316",
-  "#64748b",
-];
+const FALLBACK_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#a855f7", "#06b6d4", "#ef4444", "#f97316", "#64748b"];
 
 function subjectMeta(subject?: string) {
   const key = normSubject(subject);
@@ -128,41 +124,6 @@ function Cover({ subject }: { subject?: string }) {
   );
 }
 
-function Chip({
-  label,
-  active,
-  onPress,
-}: {
-  label: string;
-  active: boolean;
-  onPress: () => void;
-}) {
-  const t = useStitchTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.chip,
-        {
-          backgroundColor: active ? t.primary : (t.dark ? "#1c2127" : "#fff"),
-          borderColor: active ? t.primary : (t.dark ? "#2a3440" : "#E5E7EB"),
-          opacity: pressed ? 0.9 : 1,
-        },
-      ]}
-    >
-      <Text
-        style={{
-          color: active ? "#fff" : (t.dark ? "#CBD5E1" : "#475569"),
-          fontFamily: t.font.medium,
-          fontSize: 13,
-        }}
-      >
-        {label}
-      </Text>
-    </Pressable>
-  );
-}
-
 function ProgressBar({ value01 }: { value01: number }) {
   const t = useStitchTheme();
   const v = Math.max(0, Math.min(1, value01));
@@ -173,23 +134,98 @@ function ProgressBar({ value01 }: { value01: number }) {
   );
 }
 
+function Pill({ label, onPress }: { label: string; onPress: () => void }) {
+  const t = useStitchTheme();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.pill,
+        {
+          backgroundColor: t.dark ? "#1c2127" : "#fff",
+          borderColor: t.dark ? "#2a3440" : "#E5E7EB",
+          opacity: pressed ? 0.9 : 1,
+        },
+      ]}
+    >
+      <Text
+        numberOfLines={1}
+        style={{
+          flex: 1,
+          color: t.dark ? "#CBD5E1" : "#475569",
+          fontFamily: t.font.medium,
+          fontSize: 13,
+        }}
+      >
+        {label}
+      </Text>
+      <Ionicons name="chevron-down" size={16} color={t.muted} />
+    </Pressable>
+  );
+}
+
 export default function LibraryTab() {
+  const { decks, categories, authUser, moveDeckToCategory, createCategory, refreshCategories } = useAppStore();
+  const initials = userInitials(authUser);
+
   const router = useRouter();
   const t = useStitchTheme();
 
-  const { decks } = useAppStore();
-
   const [query, setQuery] = useState("");
-  const [activeChip, setActiveChip] = useState<string>("All");
+
+  // Filters
+  const [activeSubject, setActiveSubject] = useState<string>("All"); // "All" | "Sans matière" | subject
+  const [activeFolder, setActiveFolder] = useState<string>("all"); // "all" | "none" | categoryId
+
+  // Rows (computed stats)
   const [rows, setRows] = useState<DeckRow[] | null>(null);
 
-  const chips = useMemo(() => {
-    const subjects = Array.from(
-      new Set(decks.map((d) => (d.subject?.trim() ? d.subject.trim() : "Sans matière")))
-    );
-    subjects.sort((a, b) => a.localeCompare(b));
-    return ["All", ...subjects];
+  // Create folder modal
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+
+  // Move-to modal (triggered via long-press menu)
+  const [moveOpen, setMoveOpen] = useState(false);
+  const [moveDeck, setMoveDeck] = useState<Deck | null>(null);
+  const [moveSearch, setMoveSearch] = useState("");
+
+  // Dropdown filter modals (scalable with 100+ categories/subjects)
+  const [folderPickerOpen, setFolderPickerOpen] = useState(false);
+  const [subjectPickerOpen, setSubjectPickerOpen] = useState(false);
+  const [folderSearch, setFolderSearch] = useState("");
+  const [subjectSearch, setSubjectSearch] = useState("");
+
+  // Prevent accidental navigation right after a long press
+  const suppressNextPressForDeckId = useRef<string | null>(null);
+
+  const subjects = useMemo(() => {
+    const out = Array.from(new Set(decks.map((d) => (d.subject?.trim() ? d.subject.trim() : "Sans matière"))));
+    out.sort((a, b) => a.localeCompare(b));
+    return ["All", ...out];
   }, [decks]);
+
+  const folderOptions = useMemo(() => {
+    const base: Array<{ id: string; label: string }> = [
+      { id: "all", label: "Tous" },
+      { id: "none", label: "Sans dossier" },
+    ];
+    const cats = (categories ?? []).map((c: Category) => ({ id: c.id, label: c.name }));
+    cats.sort((a, b) => a.label.localeCompare(b.label));
+    return [...base, ...cats];
+  }, [categories]);
+
+  const activeFolderLabel = useMemo(() => {
+    const f = folderOptions.find((x) => x.id === activeFolder);
+    return f?.label ?? "Tous";
+  }, [folderOptions, activeFolder]);
+
+  const activeSubjectLabel = useMemo(() => {
+    return activeSubject === "All" ? "Toutes matières" : activeSubject;
+  }, [activeSubject]);
+
+  useEffect(() => {
+    refreshCategories().catch(() => null);
+  }, [refreshCategories]);
 
   useEffect(() => {
     (async () => {
@@ -213,36 +249,137 @@ export default function LibraryTab() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const folder = activeFolder;
+    const subject = activeSubject;
 
     return (rows ?? []).filter((r) => {
       const subjectLabel = r.deck.subject?.trim() ? r.deck.subject.trim() : "Sans matière";
-      const okChip = activeChip === "All" ? true : subjectLabel === activeChip;
+      const okSubject = subject === "All" ? true : subjectLabel === subject;
+
+      const deckFolder = r.deck.categoryId ?? null;
+      const okFolder = folder === "all" ? true : folder === "none" ? deckFolder === null : deckFolder === folder;
+
       const okQuery = q.length === 0 ? true : r.deck.title.toLowerCase().includes(q);
-      return okChip && okQuery;
+
+      return okSubject && okFolder && okQuery;
     });
-  }, [rows, query, activeChip]);
+  }, [rows, query, activeSubject, activeFolder]);
+
+  async function submitCreateFolder() {
+    const name = newFolderName.trim();
+    if (!name) return;
+    try {
+      await createCategory(name);
+      setNewFolderName("");
+      setCreateOpen(false);
+    } catch (e: any) {
+      // eslint-disable-next-line no-alert
+      alert(e?.message ?? "Impossible de créer le dossier.");
+    }
+  }
+
+  function openMoveModal(deck: Deck) {
+    setMoveDeck(deck);
+    setMoveSearch("");
+    setMoveOpen(true);
+  }
+
+  async function applyMove(categoryId: string | null) {
+    if (!moveDeck) return;
+    try {
+      await moveDeckToCategory(moveDeck.id, categoryId);
+      setMoveOpen(false);
+      setMoveDeck(null);
+      setMoveSearch("");
+    } catch (e: any) {
+      // eslint-disable-next-line no-alert
+      alert(e?.message ?? "Impossible de déplacer le deck.");
+    }
+  }
+
+  function showDeckActions(deck: Deck) {
+    suppressNextPressForDeckId.current = deck.id;
+    setTimeout(() => {
+      if (suppressNextPressForDeckId.current === deck.id) suppressNextPressForDeckId.current = null;
+    }, 650);
+
+    const options = ["Déplacer vers…", "Annuler"];
+    const cancelButtonIndex = 1;
+
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options, cancelButtonIndex, title: deck.title },
+        (buttonIndex) => {
+          if (buttonIndex === 0) openMoveModal(deck);
+        }
+      );
+      return;
+    }
+
+    Alert.alert(deck.title, "Actions", [
+      { text: "Déplacer vers…", onPress: () => openMoveModal(deck) },
+      { text: "Annuler", style: "cancel" },
+    ]);
+  }
 
   const surface = t.dark ? "#1c2127" : "#ffffff";
   const bg = t.bg;
 
+  const filteredFolderOptions = useMemo(() => {
+    const q = folderSearch.trim().toLowerCase();
+    if (!q) return folderOptions;
+    return folderOptions.filter((o) => o.label.toLowerCase().includes(q));
+  }, [folderOptions, folderSearch]);
+
+  const filteredSubjects = useMemo(() => {
+    const q = subjectSearch.trim().toLowerCase();
+    if (!q) return subjects;
+    return subjects.filter((s) => s.toLowerCase().includes(q));
+  }, [subjects, subjectSearch]);
+
+  const filteredMoveCategories = useMemo(() => {
+    const q = moveSearch.trim().toLowerCase();
+    const cats = (categories ?? []).slice().sort((a, b) => a.name.localeCompare(b.name));
+    if (!q) return cats;
+    return cats.filter((c) => c.name.toLowerCase().includes(q));
+  }, [categories, moveSearch]);
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: bg }}>
+    <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: bg }}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: bg, borderBottomColor: "transparent" }]}>
         <Text style={[styles.h1, { color: t.text, fontFamily: t.font.display }]}>Cours</Text>
 
-        <Pressable
-          onPress={() => router.push("/(tabs)/settings")}
-          style={({ pressed }) => [
-            styles.avatarBtn,
-            { borderColor: t.dark ? "#334155" : "#E5E7EB", opacity: pressed ? 0.85 : 1 },
-          ]}
-        >
-          <View style={[styles.avatarFill, { backgroundColor: t.dark ? "#283039" : "#EEF2FF" }]} />
-          <Text style={{ position: "absolute", color: t.text, fontFamily: t.font.display, fontSize: 12 }}>
-            MF
-          </Text>
-        </Pressable>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <Pressable
+            onPress={() => setCreateOpen(true)}
+            style={({ pressed }) => [
+              styles.iconBtn,
+              {
+                backgroundColor: t.dark ? "#1c2127" : "#fff",
+                borderColor: t.dark ? "#334155" : "#E5E7EB",
+                opacity: pressed ? 0.85 : 1,
+              },
+            ]}
+            hitSlop={10}
+          >
+            <Ionicons name="folder-outline" size={18} color={t.text} />
+            <View style={[styles.iconBadge, { backgroundColor: t.primary }]} />
+          </Pressable>
+
+          <Pressable
+            onPress={() => router.push("/(tabs)/settings")}
+            style={({ pressed }) => [
+              styles.avatarBtn,
+              { borderColor: t.dark ? "#334155" : "#E5E7EB", opacity: pressed ? 0.85 : 1 },
+            ]}
+          >
+            <View style={[styles.avatarFill, { backgroundColor: t.dark ? "#283039" : "#EEF2FF" }]} />
+            <Text style={{ position: "absolute", color: t.text, fontFamily: t.font.display, fontSize: 12 }}>
+              {initials}
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
@@ -261,24 +398,16 @@ export default function LibraryTab() {
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Search topics or decks..."
+              placeholder="Rechercher un sujet ou un cours..."
               placeholderTextColor={t.muted}
-              style={[
-                styles.searchInput,
-                { color: t.text, fontFamily: t.font.body },
-              ]}
+              style={[styles.searchInput, { color: t.text, fontFamily: t.font.body }]}
             />
           </View>
         </View>
 
         {/* Hero Import */}
         <View style={{ paddingHorizontal: 16, paddingBottom: 18 }}>
-          <View
-            style={[
-              styles.hero,
-              { backgroundColor: surface, borderColor: t.dark ? "#2a3440" : "#E5E7EB" },
-            ]}
-          >
+          <View style={[styles.hero, { backgroundColor: surface, borderColor: t.dark ? "#2a3440" : "#E5E7EB" }]}>
             <View style={{ flexDirection: "row", gap: 12, alignItems: "flex-start" }}>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
@@ -303,42 +432,40 @@ export default function LibraryTab() {
 
             <Pressable
               onPress={() => router.push("/import")}
-              style={({ pressed }) => [
-                styles.heroBtn,
-                { backgroundColor: t.primary, opacity: pressed ? 0.9 : 1 },
-              ]}
+              style={({ pressed }) => [styles.heroBtn, { backgroundColor: t.primary, opacity: pressed ? 0.9 : 1 }]}
             >
               <Ionicons name="cloud-upload-outline" size={18} color="#fff" />
-              <Text style={{ color: "#fff", fontFamily: t.font.display, fontSize: 14 }}>
-                Importer un cours
-              </Text>
+              <Text style={{ color: "#fff", fontFamily: t.font.display, fontSize: 14 }}>Importer un cours</Text>
             </Pressable>
 
-            <View
-              pointerEvents="none"
-              style={[styles.blob, { right: -30, top: -30, backgroundColor: "rgba(19,127,236,0.10)" }]}
-            />
-            <View
-              pointerEvents="none"
-              style={[styles.blob, { left: -30, bottom: -30, backgroundColor: "rgba(19,127,236,0.10)" }]}
-            />
+            <View pointerEvents="none" style={[styles.blob, { right: -30, top: -30, backgroundColor: "rgba(19,127,236,0.10)" }]} />
+            <View pointerEvents="none" style={[styles.blob, { left: -30, bottom: -30, backgroundColor: "rgba(19,127,236,0.10)" }]} />
           </View>
         </View>
 
-        {/* Chips */}
-        <View style={{ paddingBottom: 14 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}>
-            {chips.map((c) => (
-              <Chip key={c} label={c} active={c === activeChip} onPress={() => setActiveChip(c)} />
-            ))}
-          </ScrollView>
+        {/* Filters (dropdowns) */}
+        <View style={{ paddingHorizontal: 16, paddingBottom: 14 }}>
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <Pill label={`Dossier: ${activeFolderLabel}`} onPress={() => setFolderPickerOpen(true)} />
+            <Pill label={`Matière: ${activeSubjectLabel}`} onPress={() => setSubjectPickerOpen(true)} />
+          </View>
+
+          {(activeFolder !== "all" || activeSubject !== "All") ? (
+            <Pressable
+              onPress={() => {
+                setActiveFolder("all");
+                setActiveSubject("All");
+              }}
+              style={({ pressed }) => [{ marginTop: 10, alignSelf: "flex-start", opacity: pressed ? 0.8 : 1 }]}
+            >
+              <Text style={{ color: t.muted, fontFamily: t.font.medium, fontSize: 13 }}>Réinitialiser les filtres</Text>
+            </Pressable>
+          ) : null}
         </View>
 
         {/* List title */}
         <View style={{ paddingHorizontal: 16, paddingBottom: 10 }}>
-          <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 18 }}>
-            Tes cours
-          </Text>
+          <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 18 }}>Tes cours</Text>
         </View>
 
         {/* List */}
@@ -363,14 +490,26 @@ export default function LibraryTab() {
             contentContainerStyle={{ paddingHorizontal: 16, gap: 12 }}
             renderItem={({ item }) => {
               const d = item.deck;
+
               const badge =
-                item.isNew ? { label: "New", colorBg: "rgba(100,116,139,0.10)", colorText: t.dark ? "#94A3B8" : "#64748B" }
-                : item.dueCards > 0 ? { label: "Active", colorBg: "rgba(34,197,94,0.10)", colorText: "#22c55e" }
-                : null;
+                item.isNew
+                  ? {
+                      label: "New",
+                      colorBg: "rgba(100,116,139,0.10)",
+                      colorText: t.dark ? "#94A3B8" : "#64748B",
+                    }
+                  : item.dueCards > 0
+                  ? { label: "Active", colorBg: "rgba(34,197,94,0.10)", colorText: "#22c55e" }
+                  : null;
 
               return (
                 <Pressable
-                  onPress={() => router.push(`/deck/${d.id}`)}
+                  onPress={() => {
+                    if (suppressNextPressForDeckId.current === d.id) return;
+                    router.push(`/deck/${d.id}`);
+                  }}
+                  onLongPress={() => showDeckActions(d)}
+                  delayLongPress={300}
                   style={({ pressed }) => [
                     styles.courseCard,
                     {
@@ -380,38 +519,40 @@ export default function LibraryTab() {
                     },
                   ]}
                 >
-                  {/* ✅ badge “pinned” toujours au même endroit */}
-                  {badge ? (
-                    <View
-                      style={[
-                        styles.badgePinned,
-                        { backgroundColor: badge.colorBg, borderColor: t.dark ? "#2a3440" : "#E5E7EB" },
-                      ]}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 10,
-                          letterSpacing: 1,
-                          fontFamily: t.font.semibold,
-                          color: badge.colorText,
-                        }}
-                      >
-                        {badge.label.toUpperCase()}
-                      </Text>
-                    </View>
-                  ) : null}
-
                   <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
                     <Cover subject={d.subject} />
 
                     <View style={{ flex: 1 }}>
-                      {/* ✅ ligne titre sans badge */}
-                      <Text numberOfLines={1} style={{ color: t.text, fontFamily: t.font.display, fontSize: 15, paddingRight: 72 }}>
-                        {d.title}
-                      </Text>
+                      {/* ✅ Ligne titre + badge (plus de chevauchement) */}
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                        <Text numberOfLines={1} style={{ flex: 1, color: t.text, fontFamily: t.font.display, fontSize: 15 }}>
+                          {d.title}
+                        </Text>
+
+                        {badge ? (
+                          <View
+                            style={[
+                              styles.badgePill,
+                              { backgroundColor: badge.colorBg, borderColor: t.dark ? "#2a3440" : "#E5E7EB" },
+                            ]}
+                          >
+                            <Text style={{ fontSize: 10, letterSpacing: 1, fontFamily: t.font.semibold, color: badge.colorText }}>
+                              {badge.label.toUpperCase()}
+                            </Text>
+                          </View>
+                        ) : null}
+                      </View>
 
                       <Text style={{ marginTop: 6, color: t.muted, fontFamily: t.font.body }}>
-                        {d.cards.length} Cards • {item.dueCards} à réviser
+                        {d.cards.length} Cards •{" "}
+                        <Text
+                          style={{
+                            color: item.dueCards > 0 ? "#ef4444" : t.muted,
+                            fontFamily: item.dueCards > 0 ? t.font.semibold : t.font.body,
+                          }}
+                        >
+                          {item.dueCards} à réviser
+                        </Text>
                       </Text>
 
                       <View style={{ marginTop: 10, flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -431,12 +572,281 @@ export default function LibraryTab() {
                     </View>
                   </View>
                 </Pressable>
-
               );
             }}
           />
         )}
       </ScrollView>
+
+      {/* Folder picker (dropdown) */}
+      <Modal transparent visible={folderPickerOpen} animationType="fade" onRequestClose={() => setFolderPickerOpen(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setFolderPickerOpen(false)}>
+          <Pressable
+            style={[styles.sheet, { backgroundColor: surface, borderColor: t.dark ? "#2a3440" : "#E5E7EB" }]}
+            onPress={() => null}
+          >
+            <View style={styles.sheetHeader}>
+              <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 16 }}>Choisir un dossier</Text>
+              <Pressable onPress={() => setFolderPickerOpen(false)} hitSlop={10}>
+                <Ionicons name="close" size={20} color={t.muted} />
+              </Pressable>
+            </View>
+
+            <View style={[styles.sheetSearch, { borderColor: t.dark ? "#2a3440" : "#E5E7EB", backgroundColor: t.dark ? "#1c2127" : "#fff" }]}>
+              <Ionicons name="search" size={16} color={t.muted} />
+              <TextInput
+                value={folderSearch}
+                onChangeText={setFolderSearch}
+                placeholder="Rechercher un dossier…"
+                placeholderTextColor={t.muted}
+                style={{ flex: 1, color: t.text, fontFamily: t.font.body, fontSize: 14 }}
+              />
+              {folderSearch ? (
+                <Pressable onPress={() => setFolderSearch("")} hitSlop={10}>
+                  <Ionicons name="close-circle" size={18} color={t.muted} />
+                </Pressable>
+              ) : null}
+            </View>
+
+            <FlatList
+              data={filteredFolderOptions}
+              keyExtractor={(x) => x.id}
+              style={{ marginTop: 10, maxHeight: 360 }}
+              renderItem={({ item }) => {
+                const active = item.id === activeFolder;
+                return (
+                  <Pressable
+                    onPress={() => {
+                      setActiveFolder(item.id);
+                      setFolderPickerOpen(false);
+                      setFolderSearch("");
+                    }}
+                    style={({ pressed }) => [
+                      styles.optionRow,
+                      {
+                        borderColor: t.dark ? "#2a3440" : "#E5E7EB",
+                        backgroundColor: pressed ? (t.dark ? "rgba(255,255,255,0.05)" : "rgba(15,23,42,0.04)") : "transparent",
+                      },
+                    ]}
+                  >
+                    <Ionicons name={item.id === "none" ? "folder-open-outline" : "folder-outline"} size={18} color={t.muted} />
+                    <Text style={{ flex: 1, color: t.text, fontFamily: t.font.medium }}>{item.label}</Text>
+                    {active ? <Ionicons name="checkmark" size={18} color={t.primary} /> : null}
+                  </Pressable>
+                );
+              }}
+            />
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Subject picker (dropdown) */}
+      <Modal transparent visible={subjectPickerOpen} animationType="fade" onRequestClose={() => setSubjectPickerOpen(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setSubjectPickerOpen(false)}>
+          <Pressable
+            style={[styles.sheet, { backgroundColor: surface, borderColor: t.dark ? "#2a3440" : "#E5E7EB" }]}
+            onPress={() => null}
+          >
+            <View style={styles.sheetHeader}>
+              <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 16 }}>Choisir une matière</Text>
+              <Pressable onPress={() => setSubjectPickerOpen(false)} hitSlop={10}>
+                <Ionicons name="close" size={20} color={t.muted} />
+              </Pressable>
+            </View>
+
+            <View style={[styles.sheetSearch, { borderColor: t.dark ? "#2a3440" : "#E5E7EB", backgroundColor: t.dark ? "#1c2127" : "#fff" }]}>
+              <Ionicons name="search" size={16} color={t.muted} />
+              <TextInput
+                value={subjectSearch}
+                onChangeText={setSubjectSearch}
+                placeholder="Rechercher une matière…"
+                placeholderTextColor={t.muted}
+                style={{ flex: 1, color: t.text, fontFamily: t.font.body, fontSize: 14 }}
+              />
+              {subjectSearch ? (
+                <Pressable onPress={() => setSubjectSearch("")} hitSlop={10}>
+                  <Ionicons name="close-circle" size={18} color={t.muted} />
+                </Pressable>
+              ) : null}
+            </View>
+
+            <FlatList
+              data={filteredSubjects}
+              keyExtractor={(x) => x}
+              style={{ marginTop: 10, maxHeight: 360 }}
+              renderItem={({ item }) => {
+                const active = item === activeSubject;
+                const label = item === "All" ? "Toutes matières" : item;
+                return (
+                  <Pressable
+                    onPress={() => {
+                      setActiveSubject(item);
+                      setSubjectPickerOpen(false);
+                      setSubjectSearch("");
+                    }}
+                    style={({ pressed }) => [
+                      styles.optionRow,
+                      {
+                        borderColor: t.dark ? "#2a3440" : "#E5E7EB",
+                        backgroundColor: pressed ? (t.dark ? "rgba(255,255,255,0.05)" : "rgba(15,23,42,0.04)") : "transparent",
+                      },
+                    ]}
+                  >
+                    <Ionicons name={item === "All" ? "layers-outline" : "book-outline"} size={18} color={t.muted} />
+                    <Text style={{ flex: 1, color: t.text, fontFamily: t.font.medium }}>{label}</Text>
+                    {active ? <Ionicons name="checkmark" size={18} color={t.primary} /> : null}
+                  </Pressable>
+                );
+              }}
+            />
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Create Folder Modal */}
+      <Modal transparent visible={createOpen} animationType="fade" onRequestClose={() => setCreateOpen(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setCreateOpen(false)}>
+          <Pressable
+            style={[styles.modalCard, { backgroundColor: surface, borderColor: t.dark ? "#2a3440" : "#E5E7EB" }]}
+            onPress={() => null}
+          >
+            <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 16 }}>Nouveau dossier</Text>
+            <Text style={{ marginTop: 6, color: t.muted, fontFamily: t.font.body }}>Exemple : UE10, Anatomie, Kiné…</Text>
+            <View style={{ marginTop: 12 }}>
+              <TextInput
+                value={newFolderName}
+                onChangeText={setNewFolderName}
+                placeholder="Nom du dossier"
+                placeholderTextColor={t.muted}
+                style={[
+                  styles.modalInput,
+                  { color: t.text, borderColor: t.dark ? "#2a3440" : "#E5E7EB", fontFamily: t.font.body },
+                ]}
+              />
+            </View>
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
+              <Pressable
+                onPress={() => setCreateOpen(false)}
+                style={({ pressed }) => [
+                  styles.modalBtn,
+                  {
+                    backgroundColor: t.dark ? "#1c2127" : "#fff",
+                    borderColor: t.dark ? "#2a3440" : "#E5E7EB",
+                    opacity: pressed ? 0.85 : 1,
+                  },
+                ]}
+              >
+                <Text style={{ color: t.text, fontFamily: t.font.display }}>Annuler</Text>
+              </Pressable>
+              <Pressable
+                onPress={submitCreateFolder}
+                style={({ pressed }) => [styles.modalBtn, { backgroundColor: t.primary, borderColor: t.primary, opacity: pressed ? 0.85 : 1 }]}
+              >
+                <Text style={{ color: "#fff", fontFamily: t.font.display }}>Créer</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Move Deck Modal (with search for many categories) */}
+      <Modal transparent visible={moveOpen} animationType="fade" onRequestClose={() => setMoveOpen(false)}>
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => {
+            setMoveOpen(false);
+            setMoveDeck(null);
+            setMoveSearch("");
+          }}
+        >
+          <Pressable
+            style={[styles.modalCard, { backgroundColor: surface, borderColor: t.dark ? "#2a3440" : "#E5E7EB" }]}
+            onPress={() => null}
+          >
+            <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 16 }}>Déplacer vers</Text>
+            <Text style={{ marginTop: 6, color: t.muted, fontFamily: t.font.body }} numberOfLines={1}>
+              {moveDeck?.title ?? ""}
+            </Text>
+
+            <View style={[styles.sheetSearch, { marginTop: 12, borderColor: t.dark ? "#2a3440" : "#E5E7EB", backgroundColor: t.dark ? "#1c2127" : "#fff" }]}>
+              <Ionicons name="search" size={16} color={t.muted} />
+              <TextInput
+                value={moveSearch}
+                onChangeText={setMoveSearch}
+                placeholder="Rechercher un dossier…"
+                placeholderTextColor={t.muted}
+                style={{ flex: 1, color: t.text, fontFamily: t.font.body, fontSize: 14 }}
+              />
+              {moveSearch ? (
+                <Pressable onPress={() => setMoveSearch("")} hitSlop={10}>
+                  <Ionicons name="close-circle" size={18} color={t.muted} />
+                </Pressable>
+              ) : null}
+            </View>
+
+            <View style={{ marginTop: 10, gap: 8, maxHeight: 340 }}>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <Pressable
+                  onPress={() => applyMove(null)}
+                  style={({ pressed }) => [
+                    styles.pickRow,
+                    { borderColor: t.dark ? "#2a3440" : "#E5E7EB", opacity: pressed ? 0.85 : 1 },
+                  ]}
+                >
+                  <Ionicons name="folder-open-outline" size={18} color={t.muted} />
+                  <Text style={{ flex: 1, color: t.text, fontFamily: t.font.medium }}>Sans dossier</Text>
+                </Pressable>
+
+                {filteredMoveCategories.map((c) => (
+                  <Pressable
+                    key={c.id}
+                    onPress={() => applyMove(c.id)}
+                    style={({ pressed }) => [
+                      styles.pickRow,
+                      { borderColor: t.dark ? "#2a3440" : "#E5E7EB", opacity: pressed ? 0.85 : 1 },
+                    ]}
+                  >
+                    <Ionicons name="folder-outline" size={18} color={t.muted} />
+                    <Text style={{ flex: 1, color: t.text, fontFamily: t.font.medium }}>{c.name}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
+              <Pressable
+                onPress={() => {
+                  setMoveOpen(false);
+                  setMoveDeck(null);
+                  setMoveSearch("");
+                }}
+                style={({ pressed }) => [
+                  styles.modalBtn,
+                  {
+                    backgroundColor: t.dark ? "#1c2127" : "#fff",
+                    borderColor: t.dark ? "#2a3440" : "#E5E7EB",
+                    opacity: pressed ? 0.85 : 1,
+                  },
+                ]}
+              >
+                <Text style={{ color: t.text, fontFamily: t.font.display }}>Fermer</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => {
+                  setMoveOpen(false);
+                  setMoveDeck(null);
+                  setMoveSearch("");
+                  setCreateOpen(true);
+                }}
+                style={({ pressed }) => [styles.modalBtn, { backgroundColor: t.primary, borderColor: t.primary, opacity: pressed ? 0.85 : 1 }]}
+              >
+                <Text style={{ color: "#fff", fontFamily: t.font.display }}>Nouveau dossier</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -462,16 +872,32 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   avatarFill: { width: "100%", height: "100%" },
-  badgePinned: {
+
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+  },
+  iconBadge: {
     position: "absolute",
-    top: 12,
-    right: 12,
+    right: 10,
+    top: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 999,
+  },
+
+  badgePill: {
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  
+
   searchWrap: {
     height: 52,
     borderRadius: 16,
@@ -515,13 +941,15 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
 
-  chip: {
-    height: 36,
-    paddingHorizontal: 16,
+  pill: {
+    flex: 1,
+    height: 38,
     borderRadius: 14,
     borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 8,
   },
 
   courseCard: {
@@ -553,5 +981,76 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
     padding: 14,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.35)",
+    padding: 18,
+    justifyContent: "center",
+  },
+  modalCard: {
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 16,
+  },
+  modalInput: {
+    height: 48,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    fontSize: 15,
+  },
+  modalBtn: {
+    flex: 1,
+    height: 46,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  sheet: {
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+    padding: 16,
+    width: "100%",
+    alignSelf: "center",
+    maxWidth: 520,
+  },
+  sheetHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  sheetSearch: {
+    height: 44,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  optionRow: {
+    height: 46,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 8,
+  },
+
+  pickRow: {
+    height: 46,
+    borderRadius: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 8,
   },
 });

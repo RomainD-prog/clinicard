@@ -65,10 +65,8 @@ export default function DeckCardsScreen() {
           text: "Supprimer",
           style: "destructive",
           onPress: async () => {
-            const updatedCards = deck.cards.filter((c) => c.id !== cardId);
-            const updatedDeck = { ...deck, cards: updatedCards };
-            await repo.saveDeck(updatedDeck);
-            setDeck(updatedDeck);
+            await repo.deleteDeckCard(deck.id, cardId);
+            await refresh();
           },
         },
       ]

@@ -41,7 +41,4 @@ app-example
 # generated native folders
 /ios
 /android
-
-# backups nano/edits
-*.bak.*
 .env

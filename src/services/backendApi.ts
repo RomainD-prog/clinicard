@@ -1,15 +1,15 @@
 // src/services/backendApi.ts
 import { API_BASE_URL } from "../config/env";
-import type { GenerationOptions } from "../types/models";
+import type { GenerationOptions, PickedFile } from "../types/models";
 
-const BASE = API_BASE_URL.replace(/\/$/, "");
+const BASE = API_BASE_URL.endsWith("/") ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
 
 async function readError(r: Response) {
   const ct = r.headers.get("content-type") || "";
   try {
     if (ct.includes("application/json")) {
       const j = await r.json();
-      return typeof j?.error === "string" ? j.error : JSON.stringify(j);
+      return typeof (j as any)?.error === "string" ? (j as any).error : JSON.stringify(j);
     }
     return await r.text();
   } catch {
@@ -28,7 +28,8 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
 }
 
 export async function createJob(params: {
-  file: { uri: string; name: string; mimeType: string };
+  file: PickedFile;
+  examFile?: PickedFile;
   opts: GenerationOptions;
 }) {
   const form = new FormData();
@@ -50,13 +51,30 @@ export async function createJob(params: {
     form.append("intensity", String((params.opts as any).intensity)); // "light" | "standard" | "max"
   }
 
+  // ✅ Mode concours (annales)
+  if (typeof (params.opts as any).examGuided === "boolean") {
+    form.append("examGuided", String((params.opts as any).examGuided));
+  }
+  if (typeof (params.opts as any).examInfluence === "string") {
+    form.append("examInfluence", String((params.opts as any).examInfluence)); // "low" | "medium" | "high"
+  }
+
   form.append("file", {
     uri: params.file.uri,
     name: params.file.name,
     type: params.file.mimeType,
   } as any);
 
-  // POST peut prendre du temps avec l'IA → timeout généreux
+  // Champ optionnel: annale (PDF)
+  if (params.examFile?.uri) {
+    form.append("exam", {
+      uri: params.examFile.uri,
+      name: params.examFile.name,
+      type: params.examFile.mimeType,
+    } as any);
+  }
+
+  // POST peut prendre du temps avec l\x27IA → timeout généreux
   const r = await fetchWithTimeout(`${BASE}/v1/jobs`, { method: "POST", body: form }, 90_000); // 90 secondes
 
   if (!r.ok) throw new Error(await readError(r));
@@ -66,7 +84,7 @@ export async function createJob(params: {
 export async function getJob(jobId: string) {
   const r = await fetchWithTimeout(`${BASE}/v1/jobs/${jobId}`, {}, 15_000);
   if (!r.ok) throw new Error(await readError(r));
-  return r.json() as Promise<{ status: "processing" | "done" | "error"; deckId?: string; error?: string }>;
+  return r.json() as Promise<{ status: "processing" | "done" | "error"; deckId?: string; error?: string }>; 
 }
 
 export async function getDeck(deckId: string) {
@@ -85,7 +103,7 @@ export async function waitForJob(jobId: string, opts?: { timeoutMs?: number; int
     const j = await getJob(jobId);
     if (j.status === "done") return j;
     if (j.status === "error") throw new Error(j.error ?? "job_error");
-    await new Promise((r) => setTimeout(r, intervalMs));
+    await new Promise((r2) => setTimeout(r2, intervalMs));
   }
   throw new Error("timeout_job");
 }

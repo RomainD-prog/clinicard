@@ -1,15 +1,11 @@
 import { Redirect } from "expo-router";
-import React, { useEffect } from "react";
+import React from "react";
 import { View } from "react-native";
 import { LoadingBlock } from "../src/components/LoadingBlock";
 import { useAppStore } from "../src/store/useAppStore";
 
 export default function Entry() {
-  const { isReady, bootstrap, onboardingDone } = useAppStore();
-
-  useEffect(() => {
-    bootstrap();
-  }, [bootstrap]);
+  const { isReady, onboardingDone } = useAppStore();
 
   if (!isReady) {
     return (

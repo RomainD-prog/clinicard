@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 import * as repo from "../../src/storage/repo";
@@ -67,6 +67,34 @@ export default function HomeTab() {
 
   const recent = useMemo(() => decks.slice(0, 3), [decks]);
 
+  const onPressReview = useCallback(async () => {
+    try {
+      // Cohérent avec le bouton Play central (Tabs)
+      await refreshReviewStats();
+
+      if (!decks || decks.length === 0) {
+        router.push("/import");
+        return;
+      }
+
+      if (totalDue > 0) {
+        router.push("/review/session?deckId=all");
+        return;
+      }
+
+      // Pas de cartes dues : on guide vers l'import (comportement actuel)
+      router.push("/import");
+    } catch (e) {
+      console.warn("[Home] onPressReview failed:", e);
+      router.push("/import");
+    }
+  }, [decks, refreshReviewStats, router, totalDue]);
+
+  const onPressLibrary = useCallback(() => {
+    router.push("/(tabs)/library");
+  }, [router]);
+
+
   const header = (
     <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
       <View style={{ marginTop: 10 }}>
@@ -77,8 +105,19 @@ export default function HomeTab() {
       </View>
 
       <View style={{ flexDirection: "row", gap: 12, marginTop: 12 }}>
-        <StatTile label="À réviser" value={`${totalDue}`} icon="school-outline" accent={t.primary} />
-        <StatTile label="Cours" value={`${decks.length}`} icon="library-outline" accent="#10b981" />
+        <Pressable
+          onPress={onPressReview}
+          style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.9 : 1 }]}
+        >
+          <StatTile label="À réviser" value={`${totalDue}`} icon="school-outline" accent={t.primary} />
+        </Pressable>
+
+        <Pressable
+          onPress={onPressLibrary}
+          style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.9 : 1 }]}
+        >
+          <StatTile label="Cours" value={`${decks.length}`} icon="library-outline" accent="#10b981" />
+        </Pressable>
       </View>
 
       <View style={{ marginTop: 16 }}>
@@ -109,9 +148,13 @@ export default function HomeTab() {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <TopBar title="Accueil"
-        showBack={false}          // ✅ pas de retour sur un onglet
-        variant="large" />
+      <TopBar
+        title="Accueil"
+        showBack={false}
+        variant="large"
+        rightIcon="person-outline"
+        onPressRight={() => router.push("/(tabs)/settings")}
+      />
 
       <FlatList
         data={recent}

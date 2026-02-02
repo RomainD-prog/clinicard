@@ -4,7 +4,7 @@ import type { AuthUser } from "../services/authService";
 import * as authService from "../services/authService";
 import * as cloudSync from "../services/cloudSync";
 import * as repo from "../storage/repo";
-import { Deck, PickedFile, StudyLevel } from "../types/models";
+import { Category, Deck, PickedFile, StudyLevel } from "../types/models";
 
 export type ThemeMode = "system" | "light" | "dark";
 
@@ -28,14 +28,20 @@ type AppState = {
   reminder: { enabled: boolean; hour: number; minute: number; notifId: string | null };
 
   decks: Deck[];
+  categories: Category[];
   selectedFile: PickedFile | null;
+  selectedExamFile: PickedFile | null;
   onboardingDone: boolean;
 
   bootstrap: () => Promise<void>;
   setLevel: (lvl: StudyLevel) => Promise<void>;
   setSelectedFile: (f: PickedFile | null) => void;
+  setSelectedExamFile: (f: PickedFile | null) => void;
 
   refreshDecks: () => Promise<void>;
+  refreshCategories: () => Promise<void>;
+  createCategory: (name: string) => Promise<Category>;
+  moveDeckToCategory: (deckId: string, categoryId: string | null) => Promise<void>;
   incFreeImportUsed: () => Promise<void>;
   setThemeMode: (mode: ThemeMode) => Promise<void>;
   setDarkMode: (v: boolean) => Promise<void>;
@@ -76,7 +82,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   isSubscribed: false,
 
   decks: [],
+  categories: [],
   selectedFile: null,
+  selectedExamFile: null,
   reminder: { enabled: false, hour: 19, minute: 0, notifId: null },
   onboardingDone: false,
 
@@ -85,6 +93,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const level = await repo.getLevel();
     const freeImportsUsed = await repo.getFreeImportsUsed();
     const decks = await repo.listDecks();
+    const categories = await repo.listCategories();
     const creditsBalance = await repo.getCreditsBalance();
     const isSubscribed = await repo.getSubscribed();
     const stats = await repo.getReviewStats();
@@ -102,6 +111,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       themeMode,
       freeImportsUsed,
       decks,
+      categories,
       creditsBalance,
       isSubscribed,
       isReady: true,
@@ -133,7 +143,27 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setSelectedFile: (f) => set({ selectedFile: f }),
 
+  setSelectedExamFile: (f) => set({ selectedExamFile: f }),
+
   refreshDecks: async () => {
+    const decks = await repo.listDecks();
+    set({ decks });
+  },
+
+  refreshCategories: async () => {
+    const categories = await repo.listCategories();
+    set({ categories });
+  },
+
+  createCategory: async (name) => {
+    const cat = await repo.createCategory(name);
+    const categories = await repo.listCategories();
+    set({ categories });
+    return cat;
+  },
+
+  moveDeckToCategory: async (deckId, categoryId) => {
+    await repo.setDeckCategory(deckId, categoryId);
     const decks = await repo.listDecks();
     set({ decks });
   },
@@ -166,11 +196,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   resetAll: async () => {
     await repo.resetAll();
     const decks = await repo.listDecks();
+    const categories = await repo.listCategories();
     const freeImportsUsed = await repo.getFreeImportsUsed();
     const creditsBalance = await repo.getCreditsBalance();
     const isSubscribed = await repo.getSubscribed();
 
-    set({ decks, freeImportsUsed, creditsBalance, isSubscribed });
+    set({ decks, categories, freeImportsUsed, creditsBalance, isSubscribed });
   },
 
   setReminderLocal: (patch) => {
@@ -190,7 +221,13 @@ export const useAppStore = create<AppState>((set, get) => ({
   freeImportsRemaining: () => Math.max(0, FREE_IMPORTS_LIMIT - get().freeImportsUsed),
 
   // ✅ Auth & Sync
-  setAuthUser: (user) => set({ authUser: user }),
+  // Quand on définit un utilisateur authentifié, on aligne aussi userId
+  // (il sert d'identifiant global dans l'app : RevenueCat, cloud sync, etc.).
+  setAuthUser: (user) =>
+    set((s) => ({
+      authUser: user,
+      userId: user ? user.id : s.userId,
+    })),
 
   logout: async () => {
     const currentUser = get().authUser;
@@ -229,17 +266,23 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   checkAuthStatus: async () => {
     // Vérifie si un utilisateur est déjà connecté au démarrage
-    const user = await authService.getCurrentUser();
-    if (user) {
-      // ✅ Définir l'utilisateur authentifié comme utilisateur actuel
-      await repo.setCurrentAuthUserId(user.id);
-      set({ authUser: user, userId: user.id });
-      
-      // ✅ Charger les données de cet utilisateur depuis le cloud
-      await cloudSync.syncFromCloud(user.id, true);
-      await get().refreshDecks();
-      await get().refreshReviewStats();
+    const { user, error } = await authService.getCurrentUser();
+
+    if (error) {
+      console.warn("[Store] getCurrentUser failed:", error);
+      return;
     }
+
+    if (!user) return;
+
+    // ✅ Définir l'utilisateur authentifié comme utilisateur actuel
+    await repo.setCurrentAuthUserId(user.id);
+    set({ authUser: user, userId: user.id });
+
+    // ✅ Charger les données de cet utilisateur depuis le cloud
+    await cloudSync.syncFromCloud(user.id, true);
+    await get().refreshDecks();
+    await get().refreshReviewStats();
   },
 
   refreshSubscriptionStatus: async () => {

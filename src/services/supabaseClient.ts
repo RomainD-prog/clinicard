@@ -1,53 +1,41 @@
-/**
- * Client Supabase
- * 
- * Ce fichier initialise le client Supabase avec un stockage sécurisé des tokens.
- * Les tokens d'authentification sont stockés de manière chiffrée sur l'appareil.
- * 
- * FONCTIONNEMENT :
- * - Utilise expo-secure-store pour stocker les tokens de manière sécurisée
- * - Le client Supabase utilise ce storage pour persister la session
- * - Quand l'utilisateur ferme et rouvre l'app, la session est automatiquement restaurée
- */
-
+// src/services/supabaseClient.ts
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
-import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from "../config/supabase";
+import "react-native-url-polyfill/auto";
 
-// Storage sécurisé pour les tokens d'authentification
-// Sur iOS/Android : utilise le Keychain/Keystore natif
-// Sur Web : fallback sur localStorage
-const secureStorage = {
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
+
+const isWeb = Platform.OS === "web";
+const isBrowser =
+  isWeb && typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+const isWebSSR = isWeb && (typeof window === "undefined" || typeof document === "undefined");
+
+const storage = {
   getItem: async (key: string) => {
-    if (Platform.OS === "web") {
-      return localStorage.getItem(key);
-    }
-    return await SecureStore.getItemAsync(key);
+    if (isBrowser) return window.localStorage.getItem(key);
+    if (isWebSSR) return null;
+    return AsyncStorage.getItem(key);
   },
   setItem: async (key: string, value: string) => {
-    if (Platform.OS === "web") {
-      localStorage.setItem(key, value);
-      return;
-    }
-    await SecureStore.setItemAsync(key, value);
+    if (isBrowser) return void window.localStorage.setItem(key, value);
+    if (isWebSSR) return;
+    await AsyncStorage.setItem(key, value);
   },
   removeItem: async (key: string) => {
-    if (Platform.OS === "web") {
-      localStorage.removeItem(key);
-      return;
-    }
-    await SecureStore.deleteItemAsync(key);
+    if (isBrowser) return void window.localStorage.removeItem(key);
+    if (isWebSSR) return;
+    await AsyncStorage.removeItem(key);
   },
 };
 
-// Client Supabase singleton
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    storage: secureStorage as any,
-    autoRefreshToken: true,
+    storage,
     persistSession: true,
-    detectSessionInUrl: false, // Pas besoin pour mobile
+    autoRefreshToken: true,
+    detectSessionInUrl: isBrowser, // false sur mobile
+    flowType: "pkce", // required for OAuth on native (exchangeCodeForSession)
   },
 });
-

@@ -1,72 +1,73 @@
-import { Lexend_300Light, Lexend_400Regular, Lexend_500Medium, Lexend_600SemiBold, Lexend_700Bold, useFonts } from "@expo-google-fonts/lexend";
+import "react-native-gesture-handler";
+
 import { Stack } from "expo-router";
 import React, { useEffect } from "react";
-import { View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { LoadingBlock } from "../src/components/LoadingBlock";
-import { initPurchases } from "../src/services/purchases";
+
 import { useAppStore } from "../src/store/useAppStore";
 
+/**
+ * Root layout (expo-router).
+ *
+ * IMPORTANT:
+ * - Only <Stack.Screen /> children inside <Stack /> (avoids expo-router warnings/crashes).
+ * - We bootstrap the app once, but we don't conditionally add/remove children inside the Stack.
+ */
 export default function RootLayout() {
-  const { isReady, bootstrap, userId, refreshSubscriptionStatus } = useAppStore();
-
-  const [fontsLoaded] = useFonts({
-    Lexend_300Light,
-    Lexend_400Regular,
-    Lexend_500Medium,
-    Lexend_600SemiBold,
-    Lexend_700Bold,
-  });
+  const bootstrap = useAppStore((s: any) => s.bootstrap);
 
   useEffect(() => {
-    async function init() {
-      await bootstrap();
-      // ✅ Initialiser RevenueCat après bootstrap pour avoir le userId
-      if (userId) {
-        await initPurchases(userId);
-        await refreshSubscriptionStatus();
+    let alive = true;
+    (async () => {
+      try {
+        await bootstrap();
+      } catch (e) {
+        console.warn("[RootLayout] bootstrap failed:", e);
+        // Unblock the UI even if bootstrap fails.
+        if (alive) useAppStore.setState({ isReady: true } as any);
       }
-    }
-    init();
-  }, []);
-
-  if (!isReady || !fontsLoaded) {
-    return (
-      <View style={{ padding: 20, marginTop: 40 }}>
-        <LoadingBlock label="Initialisation…" />
-      </View>
-    );
-  }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [bootstrap]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-    <SafeAreaProvider>
-    <Stack
-      screenOptions={{
-            headerShown: false, // ✅ Désactive par défaut, mais on réactive pour certains écrans
-        headerTitleStyle: { fontFamily: "Lexend_700Bold" },
-            headerBackTitle: "Retour", // ✅ Texte du bouton retour au lieu de "(tabs)"
-      }}
-    >
-      <Stack screenOptions={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="import/index" options={{ headerShown: false }} />
-      <Stack.Screen name="import/options" options={{ headerShown: false }} />
-      <Stack.Screen name="job/[jobId]" options={{ headerShown: true, title: "Génération" }} />
-      <Stack.Screen name="deck/[deckId]" options={{ headerShown: false }} />
-      <Stack.Screen name="deck/[deckId]/quiz" options={{ headerShown: false }} />
-      <Stack.Screen name="review/session" options={{ headerShown: true, title: "Révision" }} />
-      <Stack.Screen name="paywall" options={{ headerShown: true, title: "Premium" }} />
-      <Stack.Screen name="deck/[deckId]/cards" options={{ headerShown: false }} />
-      <Stack.Screen name="deck/[deckId]/stats" options={{ headerShown: false }} />
-      <Stack.Screen name="deck/[deckId]/card-editor" options={{ headerShown: true, title: "Modifier" }} />
-      <Stack.Screen name="deck/[deckId]/quiz-history" options={{ headerShown: true, title: "Historique QCM" }} />
-      <Stack.Screen name="onboarding/index" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/login" options={{ headerShown: false }} />
-      <Stack.Screen name="auth/signup" options={{ headerShown: false }} />
-    </Stack>
-    </SafeAreaProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        {/* Root */}
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(tabs)" />
+
+        {/* Auth */}
+        <Stack.Screen name="auth/login" />
+        <Stack.Screen name="auth/signup" />
+        <Stack.Screen name="auth/reset" />
+
+        {/* Onboarding (folder route: app/onboarding/index) */}
+        <Stack.Screen name="onboarding/index" />
+
+        {/* Import flow (folder route managed by app/import/_layout) */}
+        <Stack.Screen name="import" />
+
+        {/* Review */}
+        <Stack.Screen name="review/session" />
+
+        {/* Deck */}
+        <Stack.Screen name="deck/[deckId]" />
+        <Stack.Screen name="deck/[deckId]/cards" />
+        <Stack.Screen name="deck/[deckId]/card-editor" />
+        <Stack.Screen name="deck/[deckId]/quiz" />
+        <Stack.Screen name="deck/[deckId]/quiz-history" />
+        <Stack.Screen name="deck/[deckId]/stats" />
+
+        {/* Jobs */}
+        <Stack.Screen name="job/[jobId]" />
+
+        {/* Misc */}
+        <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+        <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
+      </Stack>
     </GestureHandlerRootView>
   );
 }

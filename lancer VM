@@ -1,0 +1,47 @@
+ssh -i ~/.ssh/id_rsa ubuntu@82.70.226.217
+
+
+prcess de maj quand on pousse les modifications sur le code :
+
+cd /opt/medflash/app
+git pull
+cd /opt/medflash
+docker-compose up -d --build
+
+
+backup
+scp -i ~/.ssh/id_rsa ubuntu@82.70.226.217:/var/lib/medflash/medflash.db ./medflash.db
+
+
+PROCEDURE DE BACKUP :
+3) Procédure de restauration (si un jour besoin)
+
+⚠️ Ça stoppe l’API quelques secondes.
+
+Choisis un backup :
+
+ls -lah /var/lib/medflash/backups | tail -n 10
+
+
+Stop l’API :
+
+cd /opt/medflash
+docker-compose stop api
+
+
+Restore (remplace FICHIER.db.gz par le bon) :
+
+sudo mv /var/lib/medflash/medflash.db /var/lib/medflash/medflash.db.bak.$(date -u +%s) || true
+sudo rm -f /var/lib/medflash/medflash.db-wal /var/lib/medflash/medflash.db-shm || true
+sudo gunzip -c /var/lib/medflash/backups/FICHIER.db.gz | sudo tee /var/lib/medflash/medflash.db >/dev/null
+
+
+Relance l’API :
+
+docker-compose start api
+
+
+
+Test :
+
+curl -I https://medflash-api.tri-pacer.fr/health
