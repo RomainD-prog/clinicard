@@ -21,7 +21,7 @@
 
 import { CLOUD_SYNC_ENABLED } from "../config/supabase";
 import * as repo from "../storage/repo";
-import { Deck, QuizAttempt, ReviewRecord } from "../types/models";
+import { Category, Deck, QuizAttempt, ReviewRecord } from "../types/models";
 import { supabase } from "./supabaseClient";
 
 // ✅ Protection contre les appels répétés en cas d'erreur
@@ -35,6 +35,7 @@ const SYNC_COOLDOWN_MS = 5000; // 5 secondes entre les tentatives
 export type CloudUserData = {
   userId: string;
   decks: Deck[];
+  categories: Category[];
   reviewRecords: ReviewRecord[];
   quizAttempts: QuizAttempt[];
   freeImportsUsed: number;
@@ -84,6 +85,7 @@ export async function syncToCloud(_userId: string): Promise<{ success: boolean; 
 
     // Récupère toutes les données locales...
     const decks = await repo.listDecks();
+    const categories = await repo.listCategories();
     const reviewRecords = await repo.getAllReviewRecords();
     const quizAttempts = await repo.getAllQuizAttempts();
     const freeImportsUsed = await repo.getFreeImportsUsed();
@@ -94,6 +96,7 @@ export async function syncToCloud(_userId: string): Promise<{ success: boolean; 
     const cloudData: CloudUserData = {
       userId: uid, // IMPORTANT : cohérent avec la session
       decks,
+      categories,
       reviewRecords,
       quizAttempts,
       freeImportsUsed,
@@ -187,6 +190,9 @@ export async function syncFromCloud(_userId: string, replaceLocal: boolean = fal
  * Utilisé au login pour s'assurer que l'utilisateur voit ses données cloud
  */
 async function replaceLocalData(cloudData: CloudUserData) {
+
+  // Remplace les catégories (dossiers)
+  await repo.setCategories(cloudData.categories ?? []);
   
   // Remplace tous les decks
   const localDecks = await repo.listDecks();

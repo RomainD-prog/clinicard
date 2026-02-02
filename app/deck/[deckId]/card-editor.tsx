@@ -94,6 +94,34 @@ export default function CardEditorScreen() {
     }
   }
 
+  async function onDelete() {
+    if (!deckId || !cardId) return;
+
+    Alert.alert(
+      "Supprimer la carte",
+      "Cette action est irréversible. Supprimer cette carte du deck ?",
+      [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Supprimer",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await repo.deleteDeckCard(deckId, cardId);
+              await refreshDecks();
+              router.back();
+            } catch (e: any) {
+              Alert.alert("Erreur", e?.message ?? "Impossible de supprimer la carte.");
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: t.bg }]} edges={["top", "left", "right"]}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -107,13 +135,33 @@ export default function CardEditorScreen() {
             {isEdit ? "Modifier la carte" : "Nouvelle carte"}
           </Text>
 
-          <Pressable
-            onPress={onSave}
-            disabled={!canSave || loading}
-            style={[styles.saveBtn, { backgroundColor: t.primary, opacity: !canSave || loading ? 0.45 : 1 }]}
-          >
-            <Text style={{ color: "#fff", fontFamily: t.font.display }}>Enregistrer</Text>
-          </Pressable>
+          <View style={styles.actions}>
+            {isEdit ? (
+              <Pressable
+                onPress={onDelete}
+                disabled={loading}
+                style={({ pressed }) => [
+                  styles.trashBtn,
+                  {
+                    borderColor: t.border,
+                    backgroundColor: t.dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+                    opacity: loading ? 0.45 : pressed ? 0.75 : 1,
+                  },
+                ]}
+                hitSlop={10}
+              >
+                <Ionicons name="trash-outline" size={18} color={t.text} />
+              </Pressable>
+            ) : null}
+
+            <Pressable
+              onPress={onSave}
+              disabled={!canSave || loading}
+              style={[styles.saveBtn, { backgroundColor: t.primary, opacity: !canSave || loading ? 0.45 : 1 }]}
+            >
+              <Text style={{ color: "#fff", fontFamily: t.font.display }}>Enregistrer</Text>
+            </Pressable>
+          </View>
         </View>
 
         {/* Scroll + safe area bas */}
@@ -178,6 +226,15 @@ const styles = StyleSheet.create({
   },
   iconBtn: { width: 44, height: 44, borderRadius: 999, alignItems: "center", justifyContent: "center" },
   title: { flex: 1, fontSize: 16 },
+  actions: { flexDirection: "row", alignItems: "center", gap: 10 },
+  trashBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   saveBtn: { height: 40, paddingHorizontal: 14, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   label: { fontSize: 12, letterSpacing: 1 },
   input: { borderWidth: StyleSheet.hairlineWidth, borderRadius: 16, padding: 12, minHeight: 90, textAlignVertical: "top" },

@@ -45,11 +45,21 @@ export type Deck = {
   title: string;
   level: StudyLevel;
   subject?: string;
+  /** Optional folder/category id (e.g. UE10). Null/undefined => "Sans dossier" */
+  categoryId?: string | null;
   createdAt: number;
   sourceFilename: string;
   cards: Flashcard[];
   mcqs: MCQ[];
   plan7d: string[]; // simple liste de jours
+};
+
+export type Category = {
+  id: string;
+  name: string;
+  /** stable order for display */
+  order: number;
+  createdAt: number;
 };
 
 export type Flashcard = {

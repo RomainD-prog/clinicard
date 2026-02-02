@@ -41,7 +41,6 @@ const PlanOnlyOut = z.object({
   plan7d: z.array(z.string().min(1)).max(14),
 });
 
-
 // --- Blueprint d'annales (abstrait) pour guider le style des QCM/flashcards
 const ExamBlueprintOut = z.object({
   examName: z.string().max(120).optional(),
@@ -63,6 +62,51 @@ const ExamBlueprintOut = z.object({
   styleNotes: z.array(z.string().min(2).max(200)).max(15).default([]),
   topicsToEmphasize: z.array(z.string().min(2).max(120)).max(20).default([]),
 });
+
+// --------------------
+// Models / Router
+// --------------------
+const MODEL_FAST = process.env.OPENAI_MODEL_FAST || "gpt-4o-mini";
+const MODEL_SMART = process.env.OPENAI_MODEL_SMART || "gpt-5-mini";
+
+/**
+ * Approx tokens from chars (rough but good enough for routing).
+ * Typical FR text: ~4 chars/token.
+ */
+function approxTokensFromChars(chars) {
+  return Math.ceil((chars || 0) / 4);
+}
+
+/**
+ * Heuristic complexity score (0..6).
+ * Goal: escalate only when inputs are long/technical/structured.
+ */
+function complexityScore(text) {
+  const t = text || "";
+  const tokens = approxTokensFromChars(t.length);
+
+  const hasTable = (t.match(/\|.{2,}\|/g) || []).length;
+  const bullets = (t.match(/^\s*[-•*]\s+/gm) || []).length;
+  const enums = (t.match(/^\s*\d+[\).]\s+/gm) || []).length;
+  const acronyms = (t.match(/\b[A-Z]{3,}\b/g) || []).length;
+  const units = (t.match(/\b(mg|g|µg|ug|mmol|mEq|UI|IU|%|cm|mm|°C)\b/gi) || []).length;
+
+  let score = 0;
+  if (tokens > 12000) score += 2;
+  if (tokens > 20000) score += 2;
+  if (hasTable > 8) score += 1;
+  if (bullets + enums > 120) score += 1;
+  if (acronyms > 120) score += 1;
+  if (units > 120) score += 1;
+
+  return Math.min(score, 6);
+}
+
+function pickModel(text) {
+  const score = complexityScore(text);
+  const threshold = Number(process.env.OPENAI_ROUTER_THRESHOLD ?? 4);
+  return score >= threshold ? MODEL_SMART : MODEL_FAST;
+}
 
 // --------------------
 // Utils
@@ -140,14 +184,12 @@ function uniqByQuestion(items) {
 // Main
 // --------------------
 
-export async function analyzeExamBlueprint({
-  text,
-  level = "PASS",
-  language = "fr",
-}) {
+export async function analyzeExamBlueprint({ text, level = "PASS", language = "fr" }) {
   if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY manquante dans .env");
 
-  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
+  // Blueprint: par défaut FAST (coût bas). Option : override via env.
+  const model = process.env.OPENAI_MODEL_BLUEPRINT || MODEL_FAST;
+
   const clipChars = clampInt(process.env.EXAM_CLIP_CHARS ?? 16000, 2000, 60000);
   const clipped = (text ?? "").slice(0, clipChars);
 
@@ -206,20 +248,29 @@ export async function generateDeckFromText({
 }) {
   if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY manquante dans .env");
 
-  const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
   const maxOut = clampInt(process.env.MAX_OUTPUT_TOKENS ?? 6000, 800, 12000);
-  const clipChars = clampInt(process.env.DEV_CLIP_CHARS ?? 12000, 2000, 50000);
+  const rawLen = (text ?? "").length;
+  const defaultCap = rawLen <= 80000 ? rawLen : 80000;
+  const clipChars = clampInt(process.env.DEV_CLIP_CHARS ?? defaultCap, 12000, 250000);
 
   const cardsTarget = clampInt(cardsCount, 5, 200);
   const mcqTarget = clampInt(mcqCount, 0, 200);
   const daysTarget = clampInt(planDays, 0, 14);
 
   const clipped = (text ?? "").slice(0, clipChars);
+  if ((text ?? "").length > clipChars) {
+    console.warn(
+      `[generate] WARNING: input clipped (${clipChars}/${(text ?? "").length} chars). Consider raising DEV_CLIP_CHARS or chunking.`
+    );
+  }
 
+  const modelPicked = pickModel(clipped);
   console.log(
     `[generate] chars=${(text ?? "").length} clipped=${clipped.length} level=${level} cards=${cardsTarget} mcq=${mcqTarget} planDays=${daysTarget}`
   );
-
+  console.log(
+    `[router] score=${complexityScore(clipped)} picked=${modelPicked} fast=${MODEL_FAST} smart=${MODEL_SMART}`
+  );
 
   const examInfluenceNorm = ["low", "medium", "high"].includes(String(examInfluence))
     ? String(examInfluence)
@@ -248,7 +299,7 @@ Interprétation de l'influence:
 `.trim()
     : "";
 
-  // ✅ Prompt renforcé (tuteur médecine + concours + précision)
+  // ✅ Prompt renforcé (tuteur médecine + concours + précision) — INCHANGÉ
   const sys = `
 Ton objectif est d’aider un étudiant à **réussir un concours exigeant** : tu dois transformer un cours en
 flashcards et QCM **hautement pédagogiques**, **précis**, et **fidèles aux attendus**.
@@ -288,7 +339,7 @@ Règles de contenu :
 ${examModeSection}
 `.trim();
 
-  // On donne un contexte clair à l’IA + objectif “exactement N si possible”
+  // INCHANGÉ
   const userDeck = `
 Tu vas générer un deck complet.
 Cible:
@@ -319,9 +370,9 @@ ${JSON.stringify(
   )}
 `.trim();
 
-  // 1) Génération principale
+  // 1) Génération principale (MODEL ROUTÉ)
   let out = await parseStructured({
-    model,
+    model: modelPicked,
     schema: DeckOut,
     name: "deck",
     max_output_tokens: maxOut,
@@ -331,15 +382,15 @@ ${JSON.stringify(
     ],
   });
 
-  // 2) Si l’IA n’atteint pas les quantités, on tente 1-2 “top-up” (sans doublons)
+  // 2) Top-up (d'abord avec modelPicked)
   let cards = uniqByQuestion(out.cards ?? []);
   let mcqs = uniqByQuestion(out.mcqs ?? []);
 
-  // --- top up cards
-  for (let i = 0; i < 2 && cards.length < cardsTarget; i++) {
-    const need = cardsTarget - cards.length;
+  async function topUpCards(usingModel) {
+    for (let i = 0; i < 2 && cards.length < cardsTarget; i++) {
+      const need = cardsTarget - cards.length;
 
-    const userMoreCards = `
+      const userMoreCards = `
 Génère ${need} flashcards supplémentaires (question/answer), SANS doublons.
 Interdictions :
 - ne répète pas une question existante,
@@ -353,22 +404,24 @@ Texte:
 ${clipped}
 `.trim();
 
-    const more = await parseStructured({
-      model,
-      schema: CardsOnlyOut,
-      name: "more_cards",
-      max_output_tokens: Math.min(4000, maxOut),
-      input: [
-        { role: "system", content: sys },
-        { role: "user", content: userMoreCards },
-      ],
-    });
+      const more = await parseStructured({
+        model: usingModel,
+        schema: CardsOnlyOut,
+        name: "more_cards",
+        max_output_tokens: Math.min(4000, maxOut),
+        input: [
+          { role: "system", content: sys },
+          { role: "user", content: userMoreCards },
+        ],
+      });
 
-    cards = uniqByQuestion([...cards, ...(more.cards ?? [])]);
+      cards = uniqByQuestion([...cards, ...(more.cards ?? [])]);
+    }
   }
 
-  // --- top up mcqs
-  if (mcqTarget > 0) {
+  async function topUpMcqs(usingModel) {
+    if (mcqTarget <= 0) return;
+
     for (let i = 0; i < 2 && mcqs.length < mcqTarget; i++) {
       const need = mcqTarget - mcqs.length;
 
@@ -385,7 +438,7 @@ ${clipped}
 `.trim();
 
       const more = await parseStructured({
-        model,
+        model: usingModel,
         schema: McqsOnlyOut,
         name: "more_mcqs",
         max_output_tokens: Math.min(5000, maxOut),
@@ -399,7 +452,23 @@ ${clipped}
     }
   }
 
-  // --- top up plan (si besoin)
+  await topUpCards(modelPicked);
+  await topUpMcqs(modelPicked);
+
+  // 3) Fallback qualité: si on remplit trop peu, on retente uniquement les top-ups avec MODEL_SMART
+  const minFill = Number(process.env.OPENAI_MIN_FILL_RATIO ?? 0.85);
+  const cardsOk = cards.length >= Math.ceil(cardsTarget * minFill);
+  const mcqsOk = mcqTarget === 0 || mcqs.length >= Math.ceil(mcqTarget * minFill);
+
+  if ((!cardsOk || !mcqsOk) && modelPicked !== MODEL_SMART) {
+    console.warn(
+      `[router] low fill ratio (cards=${cards.length}/${cardsTarget}, mcqs=${mcqs.length}/${mcqTarget}). Retrying top-ups with ${MODEL_SMART}.`
+    );
+    await topUpCards(MODEL_SMART);
+    await topUpMcqs(MODEL_SMART);
+  }
+
+  // --- top up plan (si besoin) — on garde le même modèle que la génération principale
   let plan7d = (out.plan7d ?? []).slice(0, 14);
   if (daysTarget > 0 && plan7d.length < daysTarget) {
     const userPlan = `
@@ -411,7 +480,7 @@ ${clipped}
 `.trim();
 
     const p = await parseStructured({
-      model,
+      model: modelPicked,
       schema: PlanOnlyOut,
       name: "plan",
       max_output_tokens: 1200,
@@ -424,7 +493,7 @@ ${clipped}
     plan7d = (p.plan7d ?? []).slice(0, 14);
   }
 
-  // 3) Normalisation IDs + slicing final (respect des caps)
+  // 4) Normalisation IDs + slicing final (respect des caps)
   const deck = {
     id: nanoid(),
     title: out.title,
@@ -432,7 +501,9 @@ ${clipped}
     level,
     subject,
     sourceFilename: sourceFilename ?? null,
-    generationMeta: examBlueprint ? { examGuided: true, examInfluence: examInfluenceNorm } : { examGuided: false },
+    generationMeta: examBlueprint
+      ? { examGuided: true, examInfluence: examInfluenceNorm, modelPicked }
+      : { examGuided: false, modelPicked },
     cards: cards.slice(0, cardsTarget).map((c) => ({ id: nanoid(), ...c })),
     mcqs: mcqs.slice(0, mcqTarget).map((q) => ({ id: nanoid(), ...q })),
     plan7d: plan7d.slice(0, daysTarget),

@@ -7,6 +7,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 
 import * as repo from "../../src/storage/repo";
 import { useAppStore } from "../../src/store/useAppStore";
+import { TopBar } from "../../src/uiStitch/TopBar";
 import { useStitchTheme } from "../../src/uiStitch/theme";
 
 const PRIVACY_POLICY_URL = "https://romaind-prog.github.io/clinicard/privacy-policy.html";
@@ -275,43 +276,39 @@ export default function ProfileTabScreen() {
   }
 
   return (
-    <SafeAreaView style={[styles.root, { backgroundColor: t.bg }]} edges={["top", "left", "right"]}>
+    <SafeAreaView style={[styles.root, { backgroundColor: t.bg }]} edges={["left", "right", "bottom"]}>
+      <TopBar title="Profil" variant="large" showBack={false} />
       <ScrollView
         contentContainerStyle={{
-          paddingTop: Math.max(10, insets.top + 6),
+          paddingTop: 12,
           paddingBottom: insets.bottom + 24,
           paddingHorizontal: 18,
         }}
       >
-        {/* Header */}
-        <View style={styles.headerRow}>
-          <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 40, letterSpacing: -0.5 }}>
-            Profil
-          </Text>
-
+        {/* Upgrade */}
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 12 }}>
           <Pressable
-            onPress={() => router.push("/paywall")}
-            style={({ pressed }) => [
-              styles.upgradeBtn,
-              {
-                backgroundColor: isSubscribed ? (t.dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)") : "#6D28D9",
-                opacity: pressed ? 0.9 : 1,
-              },
-            ]}
-          >
-            <Ionicons name="sparkles" size={18} color={isSubscribed ? t.text : "#fff"} />
-            <Text
-              style={{
-                color: isSubscribed ? t.text : "#fff",
-                fontFamily: t.font.display,
-                fontSize: 15,
-              }}
-            >
-              {isSubscribed ? "Premium" : "Mettre à niveau"}
-            </Text>
-          </Pressable>
+                      onPress={() => router.push("/paywall")}
+                      style={({ pressed }) => [
+                        styles.upgradeBtn,
+                        {
+                          backgroundColor: isSubscribed ? (t.dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)") : "#6D28D9",
+                          opacity: pressed ? 0.9 : 1,
+                        },
+                      ]}
+                    >
+                      <Ionicons name="sparkles" size={18} color={isSubscribed ? t.text : "#fff"} />
+                      <Text
+                        style={{
+                          color: isSubscribed ? t.text : "#fff",
+                          fontFamily: t.font.display,
+                          fontSize: 15,
+                        }}
+                      >
+                        {isSubscribed ? "Premium" : "Mettre à niveau"}
+                      </Text>
+                    </Pressable>
         </View>
-
         {/* Quick actions */}
         <View style={{ marginTop: 14, gap: 12 }}>
           <ActionCard

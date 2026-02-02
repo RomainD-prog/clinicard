@@ -8,35 +8,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { setRecoverySessionFromUrl, updatePasswordFromRecovery } from "../../src/services/authService";
 import { useStitchTheme } from "../../src/uiStitch/theme";
 
-type RecoveryTokens = {
-  access_token?: string | null;
-  refresh_token?: string | null;
-  type?: string | null;
-};
-
-function extractRecoveryTokens(url: string): RecoveryTokens {
-  // Supporte:
-  // - medflash://auth/reset#access_token=...&refresh_token=...&type=recovery
-  // - medflash://auth/reset?access_token=...&refresh_token=...&type=recovery
-  // - (au cas où) mélange des deux
-  const [beforeHash, hashPart = ""] = url.split("#");
-  const queryPart = beforeHash.split("?")[1] ?? "";
-
-  const query = new URLSearchParams(queryPart);
-  const hash = new URLSearchParams(hashPart);
-
-  const access_token = hash.get("access_token") ?? query.get("access_token");
-  const refresh_token = hash.get("refresh_token") ?? query.get("refresh_token");
-  const type = hash.get("type") ?? query.get("type");
-
-  return { access_token, refresh_token, type };
-}
-
-function hasRecoveryTokens(url: string) {
-  const t = extractRecoveryTokens(url);
-  return !!(t.access_token && t.refresh_token);
-}
-
 export default function ResetPasswordScreen() {
   const t = useStitchTheme();
   const router = useRouter();
@@ -46,67 +17,69 @@ export default function ResetPasswordScreen() {
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Important: on "lock" seulement quand on a réellement réussi à traiter un lien valide
-  const handledValidLink = useRef(false);
+  // évite double traitement
+  const handledUrlRef = useRef<string | null>(null);
+  // fallback
+  const gotLinkRef = useRef(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let alive = true;
 
-    const failAndExit = (title: string, msg: string) => {
+    async function handleUrl(url: string) {
       if (!alive) return;
-      Alert.alert(title, msg, [{ text: "OK", onPress: () => router.replace("/auth/login") }]);
-    };
 
-    const tryHandleUrl = async (incomingUrl: string | null | undefined) => {
-      if (!alive) return;
-      if (!incomingUrl) return false;
-      if (handledValidLink.current) return true;
-
-      // Si l'URL ne contient pas (encore) les tokens, on ne lock pas.
-      // (ex: certaines pages web ouvrent l'app puis injectent le hash après)
-      if (!hasRecoveryTokens(incomingUrl)) return false;
-
-      try {
-        const { error } = await setRecoverySessionFromUrl(incomingUrl);
-        if (error) {
-          failAndExit("Lien invalide", error);
-          return true; // lien traité (même si invalide)
-        }
-
-        handledValidLink.current = true;
-        if (alive) setReady(true);
-        return true;
-      } catch (e: any) {
-        failAndExit("Erreur", e?.message ?? "Impossible de valider le lien.");
-        return true;
+      // dès qu’on reçoit une URL, on annule le fallback
+      gotLinkRef.current = true;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
-    };
 
-    // 1) Essaye au démarrage (cold start)
+      // évite retrigger
+      if (handledUrlRef.current === url) return;
+      handledUrlRef.current = url;
+
+      const { error } = await setRecoverySessionFromUrl(url);
+
+      if (!alive) return;
+
+      if (error) {
+        Alert.alert("Lien invalide", error, [{ text: "OK", onPress: () => router.replace("/auth/login") }]);
+        return;
+      }
+
+      setReady(true);
+    }
+
     (async () => {
+      // 1) Si l’app est ouverte via le lien
       const initial = await Linking.getInitialURL();
-      const handled = await tryHandleUrl(initial);
-
-      // Si pas de lien valide au démarrage, on attend un éventuel event "url"
-      if (!handled) {
-        // Petit timeout de sécurité: si rien n’arrive, on affiche le message
-        setTimeout(() => {
-          if (!alive) return;
-          if (!handledValidLink.current) {
-            failAndExit("Lien manquant", "Ouvre le lien de réinitialisation depuis l’email.");
-          }
-        }, 1500);
+      if (initial) {
+        await handleUrl(initial);
       }
-    })();
 
-    // 2) Essaye aussi via event (souvent nécessaire sur iOS)
-    const sub = Linking.addEventListener("url", async ({ url }) => {
-      await tryHandleUrl(url);
-    });
+      // 2) Si l’app est déjà ouverte quand le lien arrive
+      const sub = Linking.addEventListener("url", ({ url }) => {
+        handleUrl(url);
+      });
+
+      // 3) fallback (seulement si aucun lien n’arrive)
+      timeoutRef.current = setTimeout(() => {
+        if (!alive) return;
+        if (gotLinkRef.current) return;
+
+        Alert.alert("Lien manquant", "Ouvre le lien de réinitialisation depuis l’email.", [
+          { text: "OK", onPress: () => router.replace("/auth/login") },
+        ]);
+      }, 8000);
+
+      return () => sub.remove();
+    })();
 
     return () => {
       alive = false;
-      sub.remove();
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, [router]);
 
@@ -117,7 +90,11 @@ export default function ResetPasswordScreen() {
   }, [password, confirm]);
 
   async function onSubmit() {
-    if (!ready || !canSubmit || loading) return;
+    if (!ready) {
+      Alert.alert("Lien manquant", "Ouvre le lien de réinitialisation depuis l’email.");
+      return;
+    }
+    if (!canSubmit || loading) return;
 
     setLoading(true);
     try {
@@ -138,11 +115,7 @@ export default function ResetPasswordScreen() {
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: t.bg }]} edges={["top", "left", "right"]}>
       <View style={styles.header}>
-        <Pressable
-          onPress={() => router.back()}
-          hitSlop={10}
-          style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
-        >
+        <Pressable onPress={() => router.back()} hitSlop={10}>
           <Ionicons name="chevron-back" size={26} color={t.text} />
         </Pressable>
         <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 18 }}>

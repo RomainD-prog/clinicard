@@ -4,7 +4,7 @@ import type { AuthUser } from "../services/authService";
 import * as authService from "../services/authService";
 import * as cloudSync from "../services/cloudSync";
 import * as repo from "../storage/repo";
-import { Deck, PickedFile, StudyLevel } from "../types/models";
+import { Category, Deck, PickedFile, StudyLevel } from "../types/models";
 
 export type ThemeMode = "system" | "light" | "dark";
 
@@ -28,6 +28,7 @@ type AppState = {
   reminder: { enabled: boolean; hour: number; minute: number; notifId: string | null };
 
   decks: Deck[];
+  categories: Category[];
   selectedFile: PickedFile | null;
   selectedExamFile: PickedFile | null;
   onboardingDone: boolean;
@@ -38,6 +39,9 @@ type AppState = {
   setSelectedExamFile: (f: PickedFile | null) => void;
 
   refreshDecks: () => Promise<void>;
+  refreshCategories: () => Promise<void>;
+  createCategory: (name: string) => Promise<Category>;
+  moveDeckToCategory: (deckId: string, categoryId: string | null) => Promise<void>;
   incFreeImportUsed: () => Promise<void>;
   setThemeMode: (mode: ThemeMode) => Promise<void>;
   setDarkMode: (v: boolean) => Promise<void>;
@@ -78,6 +82,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   isSubscribed: false,
 
   decks: [],
+  categories: [],
   selectedFile: null,
   selectedExamFile: null,
   reminder: { enabled: false, hour: 19, minute: 0, notifId: null },
@@ -88,6 +93,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const level = await repo.getLevel();
     const freeImportsUsed = await repo.getFreeImportsUsed();
     const decks = await repo.listDecks();
+    const categories = await repo.listCategories();
     const creditsBalance = await repo.getCreditsBalance();
     const isSubscribed = await repo.getSubscribed();
     const stats = await repo.getReviewStats();
@@ -105,6 +111,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       themeMode,
       freeImportsUsed,
       decks,
+      categories,
       creditsBalance,
       isSubscribed,
       isReady: true,
@@ -143,6 +150,24 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ decks });
   },
 
+  refreshCategories: async () => {
+    const categories = await repo.listCategories();
+    set({ categories });
+  },
+
+  createCategory: async (name) => {
+    const cat = await repo.createCategory(name);
+    const categories = await repo.listCategories();
+    set({ categories });
+    return cat;
+  },
+
+  moveDeckToCategory: async (deckId, categoryId) => {
+    await repo.setDeckCategory(deckId, categoryId);
+    const decks = await repo.listDecks();
+    set({ decks });
+  },
+
   incFreeImportUsed: async () => {
     const next = await repo.incFreeImportsUsed();
     set({ freeImportsUsed: next });
@@ -171,11 +196,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   resetAll: async () => {
     await repo.resetAll();
     const decks = await repo.listDecks();
+    const categories = await repo.listCategories();
     const freeImportsUsed = await repo.getFreeImportsUsed();
     const creditsBalance = await repo.getCreditsBalance();
     const isSubscribed = await repo.getSubscribed();
 
-    set({ decks, freeImportsUsed, creditsBalance, isSubscribed });
+    set({ decks, categories, freeImportsUsed, creditsBalance, isSubscribed });
   },
 
   setReminderLocal: (patch) => {

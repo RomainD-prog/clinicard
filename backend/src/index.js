@@ -13,24 +13,23 @@ import { extractTextFromUpload } from "./extract.js";
 import * as gen from "./generate.js";
 
 // Fallbacks: on évite de crasher si generate.js ne fournit pas certaines fonctions
-const generateDeckFromText = gen.generateDeckFromText;
+const generateDeckFromText = gen.generateDeckFromText ?? (async () => { throw new Error("generateDeckFromText missing"); });
 const analyzeExamBlueprint = gen.analyzeExamBlueprint ?? (async () => null);
 
 import {
+  countActiveDecksByClient,
   createJob,
+  // quota/premium
+  ensureClient,
+  getClientStatus,
   getDeck,
   getJob,
   initStore,
   saveDeck,
-  updateJob,
-
-  // quota/premium
-  ensureClient,
-  getClientStatus,
-  setClientSubscribed,
   saveDeckOwner,
-  countActiveDecksByClient,
+  setClientSubscribed,
   softDeleteDeckForClient,
+  updateJob,
 } from "./storeSQLite.js";
 
 const app = express();
@@ -206,7 +205,7 @@ app.delete("/v1/decks/:deckId", loadUsage, (req, res) => {
     console.error("[DELETE /v1/decks]", safeErr(e));
     res.status(500).json({ error: "server_error" });
   }
-);
+});
 
 // admin: set premium (protégé par token)
 app.post("/v1/admin/subscription", (req, res) => {
@@ -236,14 +235,13 @@ app.post(
   async (req, res) => {
     try {
       console.log("[POST /v1/jobs] Nouvelle génération reçue");
-
       const clientId = res.locals.medflash.clientId;
-
+  
       const courseUpload = req.files?.file?.[0];
       const examUpload = req.files?.exam?.[0] || req.files?.examFile?.[0];
-
+  
       if (!courseUpload?.buffer) return res.status(400).json({ error: "file manquant" });
-
+  
       // opts peut venir en JSON string (multipart)
       let opts = null;
       if (req.body?.opts) {
@@ -251,8 +249,10 @@ app.post(
           opts = typeof req.body.opts === "string" ? JSON.parse(req.body.opts) : req.body.opts;
         } catch {
           opts = null;
-    }
+        }
       }
+  
+
 
       const level = opts?.level ?? req.body.level ?? "PASS";
       const subject = (opts?.subject ?? req.body.subject) || undefined;
@@ -329,7 +329,7 @@ app.post(
 
             if (examText && examText.length >= 300) {
               stage = "analyze_exam";
-              await updateJob(jobId, { stage, progress: 0.20 });
+              await updateJob(jobId, { stage, progress: 0.2 });
 
               examBlueprint = await analyzeExamBlueprint({
                 text: examText,

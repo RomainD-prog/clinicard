@@ -37,7 +37,9 @@ function mapUser(user: User): AuthUser {
 
 // --- Fonctions API ---
 
-export async function signup(data: SignupData): Promise<{ user: AuthUser | null; error: string | null }> {
+export async function signup(
+  data: SignupData
+): Promise<{ user: AuthUser | null; error: string | null }> {
   try {
     const { data: signupData, error } = await supabase.auth.signUp({
       email: data.email,
@@ -52,16 +54,18 @@ export async function signup(data: SignupData): Promise<{ user: AuthUser | null;
 
     if (error) return { user: null, error: error.message };
 
-    return { 
-      user: signupData.user ? mapUser(signupData.user) : null, 
-      error: null 
+    return {
+      user: signupData.user ? mapUser(signupData.user) : null,
+      error: null,
     };
-  } catch (err) {
+  } catch {
     return { user: null, error: "Une erreur inattendue s'est produite" };
   }
 }
 
-export async function login(data: LoginData): Promise<{ user: AuthUser | null; error: string | null }> {
+export async function login(
+  data: LoginData
+): Promise<{ user: AuthUser | null; error: string | null }> {
   try {
     const { data: loginData, error } = await supabase.auth.signInWithPassword({
       email: data.email,
@@ -70,11 +74,11 @@ export async function login(data: LoginData): Promise<{ user: AuthUser | null; e
 
     if (error) return { user: null, error: error.message };
 
-    return { 
-      user: loginData.user ? mapUser(loginData.user) : null, 
-      error: null 
+    return {
+      user: loginData.user ? mapUser(loginData.user) : null,
+      error: null,
     };
-  } catch (err) {
+  } catch {
     return { user: null, error: "Une erreur inattendue" };
   }
 }
@@ -84,24 +88,22 @@ export async function logout(): Promise<{ error: string | null }> {
   return { error: error?.message ?? null };
 }
 
-/**
- * Version corrigée de getCurrentUser
- */
 export async function getCurrentUser(): Promise<{ user: AuthUser | null; error: string | null }> {
   try {
-    // IMPORTANT:
-    // Sur mobile, supabase.auth.getUser() renvoie souvent AuthSessionMissingError
-    // quand l'utilisateur n'est pas connecté. Ce n'est pas une "erreur" :
-    // on doit simplement considérer que user=null.
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     if (!session?.user) {
       return { user: null, error: null };
     }
 
-    // Si on a une session, on peut utiliser getUser() pour valider le JWT côté serveur.
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
     if (error || !user) {
-      // AuthSessionMissingError ici => on traite comme "pas connecté"
       if ((error as any)?.name === "AuthSessionMissingError") {
         return { user: null, error: null };
       }
@@ -109,7 +111,7 @@ export async function getCurrentUser(): Promise<{ user: AuthUser | null; error: 
     }
 
     return { user: mapUser(user), error: null };
-  } catch (err) {
+  } catch {
     return { user: null, error: "Impossible de récupérer l'utilisateur" };
   }
 }
@@ -130,7 +132,6 @@ export async function changePassword(newPassword: string): Promise<{ error: stri
  */
 export async function requestPasswordReset(email: string): Promise<{ error: string | null }> {
   try {
-    const redirectTo = "medflash://auth/reset";
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: "medflash://auth/reset",
     });
@@ -141,50 +142,70 @@ export async function requestPasswordReset(email: string): Promise<{ error: stri
 }
 
 /**
- * Récupère les tokens contenus dans l'URL (query ou fragment) d'un lien de recovery
- * Supabase et pose la session localement.
+ * Valide un lien de recovery Supabase et pose une session.
+ *
+ * IMPORTANT: ton client Supabase est en flowType "pkce".
+ * -> Supabase peut renvoyer un `code=...` (query) au lieu de access_token/refresh_token (hash).
+ * On doit donc supporter:
+ *  - error / error_description / error_code
+ *  - code  -> exchangeCodeForSession(code)
+ *  - access_token + refresh_token -> setSession
  */
 export async function setRecoverySessionFromUrl(url: string): Promise<{ error: string | null }> {
   try {
-    // Supabase peut mettre les tokens en query (?access_token=...) ou en fragment (#access_token=...)
     const getParams = (raw: string) => {
-      const params = new URLSearchParams(raw.startsWith("?") || raw.startsWith("#") ? raw.slice(1) : raw);
+      const params = new URLSearchParams(
+        raw.startsWith("?") || raw.startsWith("#") ? raw.slice(1) : raw
+      );
       return params;
     };
 
-    // Évite d'utiliser l'API URL (pas toujours présente selon runtime)
     const query = url.includes("?") ? "?" + url.split("?")[1].split("#")[0] : "";
     const hash = url.includes("#") ? "#" + url.split("#")[1] : "";
 
     const qp = getParams(query);
     const hp = getParams(hash);
 
-    const access_token = qp.get("access_token") || hp.get("access_token");
-    const refresh_token = qp.get("refresh_token") || hp.get("refresh_token");
+    // 1) Gestion des erreurs renvoyées par Supabase (ex: otp_expired)
+    const err = qp.get("error") || hp.get("error");
+    const errCode = qp.get("error_code") || hp.get("error_code");
+    const errDesc = qp.get("error_description") || hp.get("error_description");
+
+    if (err || errCode || errDesc) {
+      const msg = errDesc
+        ? decodeURIComponent(errDesc.replace(/\+/g, " "))
+        : errCode || err || "Lien invalide";
+      return { error: msg };
+    }
+
+    // 2) PKCE: code -> exchangeCodeForSession
+    const code = qp.get("code") || hp.get("code");
     const type = qp.get("type") || hp.get("type");
 
-    if (!access_token || !refresh_token) {
-      return { error: "Lien invalide (tokens manquants)" };
-    }
     if (type && type !== "recovery") {
-      // On tolère l'absence de type, mais on protège les types inattendus.
       return { error: "Type de lien non supporté" };
     }
 
-    const { error } = await supabase.auth.setSession({
-      access_token,
-      refresh_token,
-    });
+    if (code) {
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      return { error: error?.message ?? null };
+    }
 
+    // 3) Implicit: access/refresh tokens
+    const access_token = qp.get("access_token") || hp.get("access_token");
+    const refresh_token = qp.get("refresh_token") || hp.get("refresh_token");
+
+    if (!access_token || !refresh_token) {
+      return { error: "Lien invalide (tokens/code manquants)" };
+    }
+
+    const { error } = await supabase.auth.setSession({ access_token, refresh_token });
     return { error: error?.message ?? null };
   } catch (err: any) {
     return { error: err?.message ?? "Impossible de valider le lien" };
   }
 }
 
-/**
- * Met à jour le mot de passe une fois la session de recovery posée.
- */
 export async function updatePasswordFromRecovery(newPassword: string): Promise<{ error: string | null }> {
   try {
     const { error } = await supabase.auth.updateUser({ password: newPassword });
@@ -196,20 +217,15 @@ export async function updatePasswordFromRecovery(newPassword: string): Promise<{
 
 export async function deleteAccount(): Promise<{ error: string | null }> {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
     const userId = session?.user.id;
     if (!userId) return { error: "Utilisateur non connecté" };
 
-    // 1. Supprimer les données métier
-    const { error: dbError } = await supabase
-      .from("user_data")
-      .delete()
-      .eq("user_id", userId);
-
+    const { error: dbError } = await supabase.from("user_data").delete().eq("user_id", userId);
     if (dbError) throw dbError;
 
-    // Note: La suppression réelle du compte Auth nécessite une fonction admin.
-    // On se contente de déconnecter ici.
     await logout();
     return { error: null };
   } catch (err: any) {
