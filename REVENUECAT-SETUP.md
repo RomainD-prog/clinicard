@@ -41,7 +41,7 @@
 - Nom : CliniCard Premium (Annuel)
 - Prix : 29,99€/an
 - Durée : 1 an
-
+x
 #### B. Ajouter les produits dans RevenueCat
 
 1. Dans RevenueCat Dashboard → Products

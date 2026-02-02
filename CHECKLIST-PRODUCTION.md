@@ -935,7 +935,7 @@ Puis ajouter un bouton dans `app/(tabs)/settings.tsx` :
 - [ ] Logs monitoring (suffisant pour MVP)
 
 ### App Mobile
-- [ ] Privacy Policy créée et publiée
+- [x] Privacy Policy créée et publiée
 - [x] EAS configuré (eas.json) ✅
 - [x] app.json mis à jour (bundle IDs, permissions) ✅
 - [x] Variables d'env EAS créées (preview + production) ✅
@@ -945,8 +945,8 @@ Puis ajouter un bouton dans `app/(tabs)/settings.tsx` :
 - [ ] Feature graphic Android créé
 
 ### Comptes
-- [ ] Apple Developer Account créé et payé
-- [ ] Google Play Console créé et payé
+- [x] Apple Developer Account créé et payé
+- [x ] Google Play Console créé et payé
 
 ### Builds & Tests
 - [ ] Build preview Android testé
