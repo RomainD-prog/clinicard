@@ -1,0 +1,35 @@
+version: "3.3"
+
+services:
+  api:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: "3333"
+      CORS_ORIGIN: "*"
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENAI_MODEL_FAST: ${OPENAI_MODEL_FAST:-gpt-4o-mini}
+      OPENAI_MODEL_SMART: ${OPENAI_MODEL_SMART:-gpt-5-mini}
+    volumes:
+      - /var/lib/medflash:/app/data
+    expose:
+      - "3333"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
+

@@ -1,0 +1,7 @@
+medflash-api.tri-pacer.fr {
+  reverse_proxy api:3333
+}
+
+http://127.0.0.1, http://localhost {
+  reverse_proxy api:3333
+}
