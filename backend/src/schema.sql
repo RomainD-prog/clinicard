@@ -44,3 +44,25 @@ CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
 CREATE INDEX IF NOT EXISTS idx_jobs_created_at ON jobs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_decks_created_at ON decks(created_at DESC);
 
+
+-- ============================================
+-- GARDE-FOU FREE/PREMIUM (clients + deck_owners)
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS clients (
+  client_id TEXT PRIMARY KEY,
+  is_subscribed INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS deck_owners (
+  deck_id TEXT PRIMARY KEY,
+  client_id TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  deleted_at INTEGER,
+  FOREIGN KEY (deck_id) REFERENCES decks(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_deck_owners_client ON deck_owners(client_id);
+CREATE INDEX IF NOT EXISTS idx_deck_owners_client_deleted ON deck_owners(client_id, deleted_at);

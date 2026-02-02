@@ -19,6 +19,31 @@ export async function initStore() {
   const dbPath = process.env.DB_PATH || join(dataDir, "medflash.db");
   
   db = new Database(dbPath);
+  // --- MIGRATION: ancien deck_owners -> client_id ---
+  try {
+    const hasDeckOwners = db
+      .prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='deck_owners'")
+      .get();
+
+    if (hasDeckOwners) {
+      const cols = db.prepare("PRAGMA table_info(deck_owners)").all().map(r => r.name);
+
+      if (!cols.includes("client_id")) {
+        db.exec("ALTER TABLE deck_owners ADD COLUMN client_id TEXT");
+
+        if (cols.includes("client_key")) {
+          db.exec("UPDATE deck_owners SET client_id=client_key WHERE client_id IS NULL OR client_id=''");
+        }
+        if (cols.includes("client_ip")) {
+          db.exec("UPDATE deck_owners SET client_id=client_ip WHERE (client_id IS NULL OR client_id='') AND client_ip IS NOT NULL");
+        }
+        db.exec("UPDATE deck_owners SET client_id='unknown' WHERE client_id IS NULL OR client_id=''");
+      }
+    }
+  } catch (e) {
+    console.warn("[initStore] migration deck_owners skipped:", e?.message || e);
+  }
+
   db.pragma("journal_mode = WAL"); // Performance boost
   db.pragma("foreign_keys = ON");
   
@@ -160,23 +185,26 @@ export async function saveDeck(deck) {
 /**
  * Récupérer un deck
  */
-export function getDeck(deckId) {
-  const stmt = db.prepare("SELECT * FROM decks WHERE id = ?");
-  const row = stmt.get(deckId);
-  
-  if (!row) return null;
-  
-  return {
-    id: row.id,
-    title: row.title,
-    level: row.level,
-    subject: row.subject,
-    createdAt: row.created_at,
-    sourceFilename: row.source_filename,
-    plan7d: JSON.parse(row.plan_7d || "[]"),
-    cards: JSON.parse(row.cards || "[]"),
-    mcqs: JSON.parse(row.mcqs || "[]"),
-  };
+export function getDeck(deckId, clientId = null, isSubscribed = false) {
+  // Abonné : accès sans filtre (optionnel)
+  if (isSubscribed) {
+    return db.prepare("SELECT * FROM decks WHERE id=?").get(deckId) ?? null;
+  }
+
+  // Pas de clientId => on refuse (sécurité)
+  if (!clientId) return null;
+
+  // Free : accès uniquement aux decks appartenant au client
+  return (
+    db.prepare(`
+      SELECT d.*
+      FROM decks d
+      JOIN deck_owners o ON o.deck_id = d.id
+      WHERE d.id = ?
+        AND o.client_id = ?
+        AND o.deleted_at IS NULL
+    `).get(deckId, clientId) ?? null
+  );
 }
 
 /**
@@ -189,3 +217,90 @@ export function closeDb() {
   }
 }
 
+// ============================================================
+// GARDE-FOU FREE/PREMIUM (clients + deck_owners)
+// ============================================================
+
+function mustDb() {
+  if (!db) throw new Error("SQLite not initialized. Call initStore() first.");
+  return db;
+}
+
+export function ensureClient(clientId) {
+  const d = mustDb();
+  const now = Date.now();
+
+  d.prepare(`
+    INSERT OR IGNORE INTO clients (client_id, is_subscribed, created_at, updated_at)
+    VALUES (?, 0, ?, ?)
+  `).run(clientId, now, now);
+
+  d.prepare(`
+    UPDATE clients SET updated_at=? WHERE client_id=?
+  `).run(now, clientId);
+}
+
+export function getClientStatus(clientId) {
+  const d = mustDb();
+  const row = d.prepare(`
+    SELECT client_id, is_subscribed, created_at, updated_at
+    FROM clients
+    WHERE client_id=?
+  `).get(clientId);
+
+  if (!row) return { clientId, isSubscribed: false };
+
+  return {
+    clientId: row.client_id,
+    isSubscribed: Boolean(row.is_subscribed),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function setClientSubscribed(clientId, isSubscribed) {
+  ensureClient(clientId);
+  const d = mustDb();
+  const now = Date.now();
+
+  d.prepare(`
+    UPDATE clients
+    SET is_subscribed=?, updated_at=?
+    WHERE client_id=?
+  `).run(isSubscribed ? 1 : 0, now, clientId);
+}
+
+export function saveDeckOwner(deckId, clientId) {
+  ensureClient(clientId);
+  const d = mustDb();
+  const now = Date.now();
+
+  d.prepare(`
+    INSERT OR REPLACE INTO deck_owners (deck_id, client_id, created_at, deleted_at)
+    VALUES (?, ?, ?, NULL)
+  `).run(deckId, clientId, now);
+}
+
+export function countActiveDecksByClient(clientId) {
+  const d = mustDb();
+  const row = d.prepare(`
+    SELECT COUNT(*) AS n
+    FROM deck_owners
+    WHERE client_id=? AND deleted_at IS NULL
+  `).get(clientId);
+
+  return Number(row?.n ?? 0);
+}
+
+export function softDeleteDeckForClient(deckId, clientId) {
+  const d = mustDb();
+  const now = Date.now();
+
+  const info = d.prepare(`
+    UPDATE deck_owners
+    SET deleted_at=?
+    WHERE deck_id=? AND client_id=? AND deleted_at IS NULL
+  `).run(now, deckId, clientId);
+
+  return info.changes > 0;
+}
