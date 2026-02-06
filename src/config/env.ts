@@ -40,3 +40,8 @@ export const MAX_PAGES_PER_IMPORT = 30;
 
 // credits MVP
 export const CREDITS_PER_IMPORT = 1;
+
+// RevenueCat (in-app purchases)
+export const REVENUECAT_IOS_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || "";
+export const REVENUECAT_ANDROID_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || "";
+export const REVENUECAT_ENTITLEMENT_ID = process.env.EXPO_PUBLIC_REVENUECAT_ENTITLEMENT_ID || "pro";

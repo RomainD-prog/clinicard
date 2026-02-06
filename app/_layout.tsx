@@ -1,8 +1,9 @@
 import "react-native-gesture-handler";
 
 import { Stack } from "expo-router";
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { configurePurchases } from "../src/services/purchases";
 
 import { useAppStore } from "../src/store/useAppStore";
 
@@ -20,6 +21,7 @@ export default function RootLayout() {
     let alive = true;
     (async () => {
       try {
+        await configurePurchases();
         await bootstrap();
       } catch (e) {
         console.warn("[RootLayout] bootstrap failed:", e);

@@ -1,5 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "./supabaseClient";
+import * as purchases from "./purchases";
 
 // --- Types ---
 export type AuthUser = {

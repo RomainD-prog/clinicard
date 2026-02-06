@@ -108,10 +108,14 @@ export default function QuizScreen() {
   function pick(label: string) {
     if (revealed) return;
     setSelected(label);
+  }
+
+  function validate() {
+    if (!selected || revealed) return;
     setRevealed(true);
 
     // scoring si on a une bonne réponse
-    if (q?.correctLabel && label === q.correctLabel) {
+    if (q?.correctLabel && selected === q.correctLabel) {
       setScore((s) => s + 1);
     }
   }
@@ -244,13 +248,17 @@ export default function QuizScreen() {
                   ? "rgba(34,197,94,0.12)"
                   : isWrongSelected
                     ? "rgba(239,68,68,0.10)"
-                    : t.card;
+                    : isSelected && !revealed
+                      ? t.dark ? "rgba(99,102,241,0.15)" : "rgba(99,102,241,0.08)"
+                      : t.card;
 
                 const border = isCorrect
                   ? "rgba(34,197,94,0.35)"
                   : isWrongSelected
                     ? "rgba(239,68,68,0.30)"
-                    : t.border;
+                    : isSelected && !revealed
+                      ? t.primary
+                      : t.border;
 
                 return (
                   <Pressable
@@ -298,22 +306,40 @@ export default function QuizScreen() {
 
             <View style={{ height: 14 }} />
 
-            <Pressable
-              onPress={idx === mcqs.length - 1 ? restart : next}
-              disabled={!revealed}
-              style={({ pressed }) => [
-                styles.primaryBtn,
-                {
-                  backgroundColor: t.primary,
-                  opacity: !revealed ? 0.45 : pressed ? 0.9 : 1,
-                },
-              ]}
-            >
-              <Text style={{ color: "#fff", fontFamily: t.font.display }}>
-                {idx === mcqs.length - 1 ? "Terminer" : "Question suivante"}
-              </Text>
-              <Ionicons name="arrow-forward" size={18} color="#fff" />
-            </Pressable>
+            {!revealed ? (
+              <Pressable
+                onPress={validate}
+                disabled={!selected}
+                style={({ pressed }) => [
+                  styles.primaryBtn,
+                  {
+                    backgroundColor: t.primary,
+                    opacity: !selected ? 0.45 : pressed ? 0.9 : 1,
+                  },
+                ]}
+              >
+                <Text style={{ color: "#fff", fontFamily: t.font.display }}>
+                  Valider
+                </Text>
+                <Ionicons name="checkmark" size={18} color="#fff" />
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={idx === mcqs.length - 1 ? restart : next}
+                style={({ pressed }) => [
+                  styles.primaryBtn,
+                  {
+                    backgroundColor: t.primary,
+                    opacity: pressed ? 0.9 : 1,
+                  },
+                ]}
+              >
+                <Text style={{ color: "#fff", fontFamily: t.font.display }}>
+                  {idx === mcqs.length - 1 ? "Terminer" : "Question suivante"}
+                </Text>
+                <Ionicons name="arrow-forward" size={18} color="#fff" />
+              </Pressable>
+            )}
           </>
         )}
       </ScrollView>

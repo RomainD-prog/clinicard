@@ -288,8 +288,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   refreshSubscriptionStatus: async () => {
     try {
       // Importer dynamiquement pour éviter les problèmes de dépendances circulaires
-      const { hasActiveSubscription } = await import("../services/purchases");
-      const isActive = await hasActiveSubscription();
+      const { refreshSubscription } = await import("../services/purchases");
+      const isActive = await refreshSubscription();
       await get().setSubscribed(isActive);
       console.log("[Store] 🔄 Statut abonnement mis à jour:", isActive);
     } catch (e) {

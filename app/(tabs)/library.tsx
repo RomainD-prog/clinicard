@@ -348,7 +348,7 @@ export default function LibraryTab() {
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: bg }}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: bg, borderBottomColor: "transparent" }]}>
-        <Text style={[styles.h1, { color: t.text, fontFamily: t.font.display }]}>Cours</Text>
+        <Text style={[styles.h1, { color: t.text, fontFamily: t.font.display, fontWeight: "800" }]}>Cours</Text>
 
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
           <Pressable

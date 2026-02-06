@@ -218,3 +218,109 @@ https://romaind-prog.github.io/clinicard/privacy-policy.html
 ---
 
 **Prêt pour la soumission ! 🚀**
+Feedback gpt
+
+🍎 APP STORE (iOS)
+Titre (≤ 30)
+CliniCard: Flashcards Médecine
+
+Subtitle (≤ 30)
+PDF → cartes & QCM experts
+
+Promotional Text (optionnel, ≤ 170)
+Importe ton cours PDF : CliniCard crée des flashcards et QCM orientés examens, avec un agent IA spécialisé médecine. Révise vite, suis ta progression.
+
+Description (≤ 4000)
+CliniCard transforme tes cours de médecine en flashcards et QCM en quelques minutes.
+
+📄 TON COURS → TON DECK
+Importe un PDF, et récupère automatiquement un deck prêt à réviser : questions ciblées, réponses claires, et QCM pour t’entraîner.
+
+🧠 UN AGENT IA SPÉCIALISÉ MÉDECINE
+Contrairement aux générateurs “généralistes”, CliniCard utilise un agent IA conçu pour la médecine :
+• notions clés & pièges classiques
+• formulations proches des attendus d’examens
+• focus sur ce qui fait réellement tomber
+
+🎯 RÉVISE EFFICACEMENT
+• Flashcards (question / réponse) pour mémoriser vite
+• QCM pour te tester et repérer tes faiblesses
+• Sessions rapides : 5, 10 ou 20 minutes selon ton temps
+
+📈 SUIVI DE PROGRESSION
+Visualise ton avancée deck par deck : ce que tu maîtrises, ce qui doit être revu, et tes performances.
+
+☁️ SAUVEGARDE & SYNCHRO
+Retrouve tes decks et ta progression sur tes appareils en te connectant.
+
+👩‍⚕️ POUR QUI ?
+• PASS / LAS
+• DFGSM / médecine (pré-clinique)
+• Tous les étudiants qui veulent réviser plus vite sans créer des cartes à la main
+
+🔒 CONFIDENTIALITÉ
+Tes données restent privées. Nous ne vendons jamais tes informations.
+
+⚠️ Note
+Les contenus sont générés automatiquement à partir de ton cours : relis/valide toujours avec tes supports et enseignants.
+
+📧 Support : support@clinicard.app
+
+Mots-clés (iOS)
+
+(tu as encore de la place, mais ça marche bien ASO)
+
+médecine,flashcards,QCM,PASS,LAS,anatomie,physio,révisions,cours,PDF,IA
+
+🤖 GOOGLE PLAY (Android)
+Titre (≤ 50)
+CliniCard: Flashcards Médecine IA
+
+Short description (≤ 80)
+Ton PDF → flashcards & QCM médicaux. Révise plus vite pour PASS/LAS.
+
+Description complète (≤ 4000)
+CliniCard transforme tes cours PDF de médecine en flashcards et QCM en quelques minutes.
+
+✅ PDF → DECK PRÊT À RÉVISER
+Importe ton cours, CliniCard génère automatiquement :
+• des flashcards (question / réponse)
+• des QCM pour t’entraîner
+• une organisation claire par deck
+
+🧠 IA SPÉCIALISÉE MÉDECINE
+CliniCard utilise un agent IA conçu pour produire des cartes plus “examen” :
+• notions clés à retenir
+• détails importants (ceux qui tombent)
+• questions pour tester ta compréhension
+
+🎯 RÉVISIONS RAPIDES ET EFFICACES
+• Sessions courtes (5/10/20 min)
+• QCM pour te tester immédiatement
+• Progression visible pour rester motivé
+
+📈 SUIVI DE PROGRESSION
+Repère tes points forts/faibles et concentre ton temps sur ce qui compte.
+
+☁️ SYNCHRO
+Connecte-toi pour retrouver tes decks et ta progression.
+
+👩‍⚕️ Idéal pour : PASS, LAS, DFGSM et révisions de médecine.
+
+🔒 Confidentialité
+Tes données sont privées. Aucune revente d’informations.
+
+⚠️ Les contenus sont générés automatiquement à partir de tes cours : vérifie toujours avec tes supports.
+
+Support : support@clinicard.app
+
+Variantes “ASO” (si tu veux tester)
+
+Subtitle iOS alternatif
+
+Crée tes cartes en 1 clic
+
+
+Short description Android alternative
+
+Génère des flashcards médecine depuis tes PDF. QCM + révisions rapides.

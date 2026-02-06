@@ -72,7 +72,7 @@
 **Impact** : **OBLIGATOIRE** pour publier sur les stores
 
 #### 2.4. Comptes Développeurs (1h + attente)
-- [ ] Apple Developer Account (99$/an)
+- [x] Apple Developer Account (99$/an)
 - [ ] Google Play Console (25$ one-time)
 
 **Impact** : Nécessaire pour publier

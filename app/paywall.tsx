@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -12,11 +12,7 @@ import {
   View,
 } from "react-native";
 
-import {
-  getOfferings,
-  purchasePackage,
-  restorePurchases,
-} from "../src/services/purchases";
+import { getOfferings, purchasePackage, restorePurchases } from "../src/services/purchases";
 import { useAppStore } from "../src/store/useAppStore";
 import { useStitchTheme } from "../src/uiStitch/theme";
 
@@ -32,7 +28,7 @@ type Package = {
 export default function PaywallScreen() {
   const router = useRouter();
   const t = useStitchTheme();
-  const { refreshSubscriptionStatus } = useAppStore();
+  const refreshSubscriptionStatus = useAppStore((s: any) => s.refreshSubscriptionStatus);
 
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
@@ -40,16 +36,24 @@ export default function PaywallScreen() {
 
   useEffect(() => {
     loadOfferings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function loadOfferings() {
     try {
-      const offering = await getOfferings();
-      if (offering?.availablePackages) {
-        setPackages(offering.availablePackages as any);
+      const offerings = await getOfferings();
+      // On prend l'offering "default" si présent, sinon le 1er
+      const current =
+        (offerings as any[])?.find((o) => o?.identifier === "default") ?? (offerings as any[])?.[0];
+
+      if (current?.availablePackages?.length) {
+        setPackages(current.availablePackages as any);
+      } else {
+        setPackages([]);
       }
     } catch (e) {
       console.error("[Paywall] Erreur chargement offres:", e);
+      setPackages([]);
     } finally {
       setLoading(false);
     }
@@ -58,20 +62,24 @@ export default function PaywallScreen() {
   async function handlePurchase(pkg: Package) {
     setPurchasing(true);
     try {
-      const { success } = await purchasePackage(pkg);
-      if (success) {
-        await refreshSubscriptionStatus();
-        Alert.alert(
-          "🎉 Bienvenue !",
-          "Tu as maintenant accès à toutes les fonctionnalités premium.",
-          [
-            {
-              text: "Continuer",
-              onPress: () => router.back(),
-            },
-          ]
-        );
-      }
+      await purchasePackage(pkg as any);
+      await refreshSubscriptionStatus?.();
+
+      Alert.alert(
+        "🎉 Bienvenue !",
+        "Tu as maintenant accès à toutes les fonctionnalités premium.",
+        [{ 
+          text: "Continuer", 
+          onPress: () => {
+            // Vérifier si on peut revenir en arrière, sinon aller à l'accueil
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace("/");
+            }
+          }
+        }]
+      );
     } catch (e: any) {
       Alert.alert("Erreur", e?.message ?? "Impossible de finaliser l'achat");
     } finally {
@@ -82,11 +90,27 @@ export default function PaywallScreen() {
   async function handleRestore() {
     setPurchasing(true);
     try {
-      const { success } = await restorePurchases();
-      await refreshSubscriptionStatus();
-      if (success) {
-        Alert.alert("✅ Restauré", "Tes achats ont été restaurés avec succès");
-        router.back();
+      const info: any = await restorePurchases();
+      await refreshSubscriptionStatus?.();
+
+      // Si RevenueCat renvoie des entitlements actifs, on considère que c'est “restauré”
+      const hasActiveEntitlements = Boolean(
+        info?.entitlements?.active && Object.keys(info.entitlements.active).length > 0
+      );
+
+      if (hasActiveEntitlements) {
+        Alert.alert("✅ Restauré", "Tes achats ont été restaurés avec succès", [
+          { 
+            text: "OK", 
+            onPress: () => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace("/");
+              }
+            }
+          },
+        ]);
       } else {
         Alert.alert("Aucun achat", "Aucun abonnement trouvé sur ce compte");
       }
@@ -101,11 +125,7 @@ export default function PaywallScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
       {/* Top bar */}
       <View style={styles.topBar}>
-        <Pressable
-          onPress={() => router.back()}
-          style={styles.iconBtn}
-          hitSlop={10}
-        >
+        <Pressable onPress={() => router.back()} style={styles.iconBtn} hitSlop={10}>
           <Ionicons name="close" size={22} color={t.text} />
         </Pressable>
 
@@ -166,12 +186,7 @@ export default function PaywallScreen() {
         </View>
 
         {/* Features */}
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: t.card, borderColor: t.border },
-          ]}
-        >
+        <View style={[styles.card, { backgroundColor: t.card, borderColor: t.border }]}>
           <Feature
             icon="infinite-outline"
             title="Decks illimités"
@@ -190,11 +205,7 @@ export default function PaywallScreen() {
             subtitle="Accède à tes cours partout"
           />
           <Divider />
-          <Feature
-            icon="analytics-outline"
-            title="Stats avancées"
-            subtitle="Analyse détaillée de tes révisions"
-          />
+          <Feature icon="analytics-outline" title="Stats avancées" subtitle="Analyse détaillée de tes révisions" />
         </View>
 
         {/* Plans */}
@@ -203,19 +214,8 @@ export default function PaywallScreen() {
             <ActivityIndicator size="large" color={t.primary} />
           </View>
         ) : packages.length === 0 ? (
-          <View
-            style={[
-              styles.card,
-              { backgroundColor: t.card, borderColor: t.border, padding: 16 },
-            ]}
-          >
-            <Text
-              style={{
-                color: t.muted,
-                fontFamily: t.font.body,
-                textAlign: "center",
-              }}
-            >
+          <View style={[styles.card, { backgroundColor: t.card, borderColor: t.border, padding: 16 }]}>
+            <Text style={{ color: t.muted, fontFamily: t.font.body, textAlign: "center" }}>
               Aucune offre disponible pour le moment
             </Text>
           </View>
@@ -225,7 +225,7 @@ export default function PaywallScreen() {
               key={pkg.identifier}
               title={pkg.product.title}
               price={pkg.product.priceString}
-              popular={pkg.identifier.includes("annual")}
+              popular={pkg.identifier.toLowerCase().includes("annual") || pkg.product.title.includes("Annuel")}
               onPress={() => handlePurchase(pkg)}
               disabled={purchasing}
             />
@@ -233,11 +233,7 @@ export default function PaywallScreen() {
         )}
 
         {/* Restore */}
-        <Pressable
-          onPress={handleRestore}
-          disabled={purchasing}
-          style={{ marginTop: 20, padding: 10 }}
-        >
+        <Pressable onPress={handleRestore} disabled={purchasing} style={{ marginTop: 20, padding: 10 }}>
           <Text
             style={{
               color: t.primary,
@@ -261,8 +257,7 @@ export default function PaywallScreen() {
             lineHeight: 16,
           }}
         >
-          L'abonnement est géré via ton compte Apple/Google. Annulable à tout
-          moment.
+          L'abonnement est géré via ton compte Apple/Google. Annulable à tout moment.
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -295,25 +290,8 @@ function Feature({
       </View>
 
       <View style={{ flex: 1 }}>
-        <Text
-          style={{
-            color: t.text,
-            fontFamily: t.font.display,
-            fontSize: 15,
-          }}
-        >
-          {title}
-        </Text>
-        <Text
-          style={{
-            marginTop: 2,
-            color: t.muted,
-            fontFamily: t.font.body,
-            fontSize: 13,
-          }}
-        >
-          {subtitle}
-        </Text>
+        <Text style={{ color: t.text, fontFamily: t.font.display, fontSize: 15 }}>{title}</Text>
+        <Text style={{ marginTop: 2, color: t.muted, fontFamily: t.font.body, fontSize: 13 }}>{subtitle}</Text>
       </View>
 
       <Ionicons name="checkmark-circle" size={20} color="#10b981" />
@@ -373,53 +351,17 @@ function PlanCard({
             backgroundColor: "rgba(255,255,255,0.2)",
           }}
         >
-          <Text
-            style={{
-              color: "#fff",
-              fontFamily: t.font.semibold,
-              fontSize: 10,
-              letterSpacing: 1,
-            }}
-          >
+          <Text style={{ color: "#fff", fontFamily: t.font.semibold, fontSize: 10, letterSpacing: 1 }}>
             POPULAIRE
           </Text>
         </View>
       )}
 
-      <Text
-        style={{
-          color: popular ? "#fff" : t.text,
-          fontFamily: t.font.display,
-          fontSize: 18,
-        }}
-      >
-        {title}
-      </Text>
+      <Text style={{ color: popular ? "#fff" : t.text, fontFamily: t.font.display, fontSize: 18 }}>{title}</Text>
 
-      <View
-        style={{
-          flexDirection: "row",
-          alignItems: "baseline",
-          marginTop: 8,
-          gap: 4,
-        }}
-      >
-        <Text
-          style={{
-            color: popular ? "#fff" : t.text,
-            fontFamily: t.font.display,
-            fontSize: 32,
-          }}
-        >
-          {price}
-        </Text>
-        <Text
-          style={{
-            color: popular ? "rgba(255,255,255,0.7)" : t.muted,
-            fontFamily: t.font.body,
-            fontSize: 14,
-          }}
-        >
+      <View style={{ flexDirection: "row", alignItems: "baseline", marginTop: 8, gap: 4 }}>
+        <Text style={{ color: popular ? "#fff" : t.text, fontFamily: t.font.display, fontSize: 32 }}>{price}</Text>
+        <Text style={{ color: popular ? "rgba(255,255,255,0.7)" : t.muted, fontFamily: t.font.body, fontSize: 14 }}>
           {title.includes("Mensuel") ? "/mois" : "/an"}
         </Text>
       </View>
