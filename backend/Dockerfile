@@ -2,7 +2,6 @@ FROM node:20-bookworm-slim
 
 WORKDIR /app
 
-# Pour dépendances natives si besoin
 RUN apt-get update && apt-get install -y --no-install-recommends \
   python3 make g++ \
   && rm -rf /var/lib/apt/lists/*
@@ -14,6 +13,7 @@ COPY . .
 
 ENV NODE_ENV=production
 ENV PORT=3333
+
 EXPOSE 3333
 
 CMD ["npm", "start"]
