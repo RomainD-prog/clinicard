@@ -1,16 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Linking from "expo-linking";
-import { useRouter } from "expo-router";
+import { useGlobalSearchParams, useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { setRecoverySessionFromUrl, updatePasswordFromRecovery } from "../../src/services/authService";
+import { supabase } from "../../src/services/supabaseClient";
 import { useStitchTheme } from "../../src/uiStitch/theme";
 
 export default function ResetPasswordScreen() {
   const t = useStitchTheme();
   const router = useRouter();
+  const globalParams = useGlobalSearchParams();
 
   const [ready, setReady] = useState(false);
   const [password, setPassword] = useState("");
@@ -19,69 +21,109 @@ export default function ResetPasswordScreen() {
 
   // évite double traitement
   const handledUrlRef = useRef<string | null>(null);
-  // fallback
-  const gotLinkRef = useRef(false);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const processingRef = useRef(false);
 
   useEffect(() => {
     let alive = true;
 
     async function handleUrl(url: string) {
-      if (!alive) return;
-
-      // dès qu’on reçoit une URL, on annule le fallback
-      gotLinkRef.current = true;
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
+      if (!alive || processingRef.current) return;
+      processingRef.current = true;
 
       // évite retrigger
-      if (handledUrlRef.current === url) return;
+      if (handledUrlRef.current === url) {
+        processingRef.current = false;
+        return;
+      }
       handledUrlRef.current = url;
 
+      console.log("[Reset] Traitement de l'URL:", url.substring(0, 150));
       const { error } = await setRecoverySessionFromUrl(url);
 
-      if (!alive) return;
+      if (!alive) {
+        processingRef.current = false;
+        return;
+      }
 
       if (error) {
+        console.error("[Reset] Erreur lors du traitement:", error);
+        processingRef.current = false;
         Alert.alert("Lien invalide", error, [{ text: "OK", onPress: () => router.replace("/auth/login") }]);
         return;
       }
 
+      console.log("[Reset] Lien validé avec succès, ready = true");
       setReady(true);
+      processingRef.current = false;
     }
 
-    (async () => {
-      // 1) Si l’app est ouverte via le lien
-      const initial = await Linking.getInitialURL();
-      if (initial) {
-        await handleUrl(initial);
+    async function tryToGetUrl() {
+      console.log("[Reset] Démarrage de l'écran de réinitialisation");
+      console.log("[Reset] Paramètres globaux:", JSON.stringify(globalParams));
+      
+      // 0) Vérifier d'abord si on a déjà une session de récupération valide
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log("[Reset] Vérification de session:", session ? "Session présente" : "Aucune session");
+        if (session?.user) {
+          console.log("[Reset] Session déjà présente, ready = true");
+          setReady(true);
+          return;
+        }
+      } catch (err) {
+        console.error("[Reset] Erreur lors de la vérification de session:", err);
       }
 
-      // 2) Si l’app est déjà ouverte quand le lien arrive
+      // 1) Essayer de construire l'URL à partir des paramètres globaux
+      // Si expo-router a passé les paramètres, on peut les utiliser
+      const code = globalParams.code as string | undefined;
+      const type = globalParams.type as string | undefined;
+      const access_token = globalParams.access_token as string | undefined;
+      const refresh_token = globalParams.refresh_token as string | undefined;
+      
+      if (code || (access_token && refresh_token)) {
+        console.log("[Reset] Paramètres trouvés dans globalParams, construction de l'URL");
+        const baseUrl = "medflash://auth/reset";
+        const params = new URLSearchParams();
+        if (code) params.set("code", code);
+        if (type) params.set("type", type);
+        if (access_token) params.set("access_token", access_token);
+        if (refresh_token) params.set("refresh_token", refresh_token);
+        const constructedUrl = `${baseUrl}?${params.toString()}`;
+        console.log("[Reset] URL construite:", constructedUrl.substring(0, 150));
+        await handleUrl(constructedUrl);
+        return;
+      }
+
+      // 2) Si l'app est ouverte via le lien (getInitialURL)
+      const initial = await Linking.getInitialURL();
+      console.log("[Reset] URL initiale:", initial || "Aucune URL initiale");
+      
+      if (initial && (initial.includes("auth/reset") || initial.includes("reset"))) {
+        console.log("[Reset] Lien de réinitialisation détecté dans l'URL initiale");
+        await handleUrl(initial);
+        return;
+      }
+
+      // 3) Si l'app est déjà ouverte quand le lien arrive (listener)
+      console.log("[Reset] Configuration du listener pour les URLs");
       const sub = Linking.addEventListener("url", ({ url }) => {
-        handleUrl(url);
+        console.log("[Reset] URL reçue via listener:", url);
+        if (url && (url.includes("auth/reset") || url.includes("reset"))) {
+          console.log("[Reset] Lien de réinitialisation détecté via listener");
+          handleUrl(url);
+        }
       });
 
-      // 3) fallback (seulement si aucun lien n’arrive)
-      timeoutRef.current = setTimeout(() => {
-        if (!alive) return;
-        if (gotLinkRef.current) return;
-
-        Alert.alert("Lien manquant", "Ouvre le lien de réinitialisation depuis l’email.", [
-          { text: "OK", onPress: () => router.replace("/auth/login") },
-        ]);
-      }, 8000);
-
       return () => sub.remove();
-    })();
+    }
+
+    tryToGetUrl();
 
     return () => {
       alive = false;
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [router]);
+  }, [router, globalParams]);
 
   const canSubmit = useMemo(() => {
     if (!password || password.length < 8) return false;
