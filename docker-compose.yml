@@ -2,7 +2,7 @@ version: "3.3"
 
 services:
   api:
-    build: ./backend
+    build: ./app/backend
     restart: unless-stopped
     environment:
       NODE_ENV: production

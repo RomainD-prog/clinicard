@@ -17,10 +17,13 @@ export const colors = {
 };
 
 export function useStitchTheme() {
-  const scheme = useColorScheme();
   const system = useColorScheme(); // "dark" | "light" | null
-  const darkMode = useAppStore((s) => s.darkMode);
-  const dark = darkMode ? true : system === "dark";
+  const themeMode = useAppStore((s) => s.themeMode);
+
+  const dark =
+    themeMode === "system"
+      ? system === "dark"
+      : themeMode === "dark";
 
   return {
     dark,
@@ -36,9 +39,6 @@ export function useStitchTheme() {
       medium: "Lexend_500Medium",
       semibold: "Lexend_600SemiBold",
     },
-    radius: {
-      lg: 16,
-      xl: 20,
-    },
+    radius: { lg: 16, xl: 20 },
   };
 }

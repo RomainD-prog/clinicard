@@ -256,7 +256,7 @@ Retrouve tes decks et ta progression sur tes appareils en te connectant.
 👩‍⚕️ POUR QUI ?
 • PASS / LAS
 • DFGSM / médecine (pré-clinique)
-• Tous les étudiants qui veulent réviser plus vite sans créer des cartes à la main
+• Tous les étudiants en santé qui veulent réviser plus vite sans créer des cartes à la main
 
 🔒 CONFIDENTIALITÉ
 Tes données restent privées. Nous ne vendons jamais tes informations.

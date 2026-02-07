@@ -404,35 +404,17 @@ export default function ProfileSettingsScreen() {
 
         <SectionTitle>APPARENCE</SectionTitle>
         <Group>
-          <Row
-            icon="moon-outline"
-            title="Mode nuit"
-            subtitle={darkMode ? "Activé" : "Auto (système)"}
-            right={
-              <Switch
-                value={darkMode}
-                onValueChange={(v) => setDarkMode(v)}
-                trackColor={{ false: t.dark ? "#283039" : "#E5E7EB", true: t.primary }}
-                thumbColor="#fff"
-              />
-            }
-          />
-          <Divider />
-          <Row
-            icon="color-palette-outline"
-            title="Thème"
-            subtitle="Système / Clair / Sombre"
-            right={<Ionicons name="chevron-forward" size={18} color={t.muted} />}
-            onPress={() => {
-              Alert.alert("Thème", "Choisir un mode", [
-                { text: "Système", onPress: () => setThemeMode("system") },
-                { text: "Clair", onPress: () => setThemeMode("light") },
-                { text: "Sombre", onPress: () => setThemeMode("dark") },
-                { text: "Annuler", style: "cancel" },
-              ]);
-            }}
-          />
-        </Group>
+        <View style={{ padding: 12, flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
+          {(["system", "light", "dark"] as const).map((m) => (
+            <Chip
+              key={m}
+              label={m === "system" ? "Système" : m === "light" ? "Jour" : "Nuit"}
+              active={themeMode === m}
+              onPress={() => setThemeMode(m)}
+            />
+          ))}
+        </View>
+      </Group>
 
         <SectionTitle>RÉVISION</SectionTitle>
         <Group>

@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.romaindurieux.medflash",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "infoPlist": {
         "NSCameraUsageDescription": "CliniCard a besoin d'accéder à votre appareil photo pour scanner des documents.",
         "NSPhotoLibraryUsageDescription": "CliniCard a besoin d'accéder à vos photos pour importer des documents.",

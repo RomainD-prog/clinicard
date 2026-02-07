@@ -1,0 +1,8 @@
+sur VM
+
+/opt/medflash/deploy.sh
+
+Faire une nouvelle version de build sur IOS (apres avoir commit )
+
+eas build -p ios --profile production
+eas submit -p ios   

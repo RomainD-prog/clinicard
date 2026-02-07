@@ -68,17 +68,7 @@ export default function PaywallScreen() {
       Alert.alert(
         "🎉 Bienvenue !",
         "Tu as maintenant accès à toutes les fonctionnalités premium.",
-        [{ 
-          text: "Continuer", 
-          onPress: () => {
-            // Vérifier si on peut revenir en arrière, sinon aller à l'accueil
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace("/");
-            }
-          }
-        }]
+        [{ text: "Continuer", onPress: () => router.back() }]
       );
     } catch (e: any) {
       Alert.alert("Erreur", e?.message ?? "Impossible de finaliser l'achat");
@@ -100,16 +90,7 @@ export default function PaywallScreen() {
 
       if (hasActiveEntitlements) {
         Alert.alert("✅ Restauré", "Tes achats ont été restaurés avec succès", [
-          { 
-            text: "OK", 
-            onPress: () => {
-              if (router.canGoBack()) {
-                router.back();
-              } else {
-                router.replace("/");
-              }
-            }
-          },
+          { text: "OK", onPress: () => router.back() },
         ]);
       } else {
         Alert.alert("Aucun achat", "Aucun abonnement trouvé sur ce compte");
