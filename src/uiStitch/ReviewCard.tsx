@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useEffect, useRef, useState } from "react";
+import { useFocusEffect } from "expo-router";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Animated,
   GestureResponderEvent,
@@ -10,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAppStore } from "../store/useAppStore";
 import { useStitchTheme } from "./theme";
 
 type ReviewCardUIProps = {
@@ -54,6 +56,12 @@ export function ReviewCardUI({
 }: ReviewCardUIProps) {
   const t = useStitchTheme();
   const insets = useSafeAreaInsets();
+  const refreshDecks = useAppStore((s) => s.refreshDecks);
+  useFocusEffect(
+   useCallback(() => {
+      refreshDecks();
+    }, [refreshDecks])
+  );
 
   // Flip state
   const flip = useRef(new Animated.Value(0)).current; // 0=front, 1=back
@@ -332,17 +340,17 @@ export function ReviewCardUI({
 
             <Pressable onPress={onHard} style={btnStyle("hard")}>
               <Text style={[styles.actTxt, { color: tone.hard.text, fontFamily: t.font.display }]}>Difficile</Text>
-              <Text style={[styles.actSub, { color: tone.hard.sub, fontFamily: t.font.medium }]}>2d</Text>
+              <Text style={[styles.actSub, { color: tone.hard.sub, fontFamily: t.font.medium }]}>2j</Text>
             </Pressable>
 
             <Pressable onPress={onGood} style={btnStyle("good")}>
               <Text style={[styles.actTxt, { color: tone.good.text, fontFamily: t.font.display }]}>Bien</Text>
-              <Text style={[styles.actSub, { color: tone.good.sub, fontFamily: t.font.medium }]}>4d</Text>
+              <Text style={[styles.actSub, { color: tone.good.sub, fontFamily: t.font.medium }]}>4j</Text>
             </Pressable>
 
             <Pressable onPress={onEasy} style={btnStyle("easy")}>
               <Text style={[styles.actTxt, { color: tone.easy.text, fontFamily: t.font.display }]}>Facile</Text>
-              <Text style={[styles.actSub, { color: tone.easy.sub, fontFamily: t.font.medium }]}>7d</Text>
+              <Text style={[styles.actSub, { color: tone.easy.sub, fontFamily: t.font.medium }]}>7j</Text>
             </Pressable>
           </View>
         ) : (

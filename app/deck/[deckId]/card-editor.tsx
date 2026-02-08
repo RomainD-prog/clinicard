@@ -24,7 +24,7 @@ export default function CardEditorScreen() {
   const insets = useSafeAreaInsets();
   const { deckId, cardId } = useLocalSearchParams<{ deckId: string; cardId?: string }>();
 
-  const { refreshDecks } = useAppStore();
+  const refreshDecks = useAppStore((s) => s.refreshDecks);
 
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");

@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 import * as repo from "../../src/storage/repo";
@@ -11,9 +11,31 @@ import { StatTile } from "../../src/uiStitch/Cards";
 import { useStitchTheme } from "../../src/uiStitch/theme";
 import { TopBar } from "../../src/uiStitch/TopBar";
 
+function getDueCountFromDeck(deck: any) {
+  const now = Date.now();
+
+  const cards = deck?.cards ?? deck?.items ?? [];
+  if (!Array.isArray(cards)) return 0;
+
+  return cards.filter((c: any) => {
+    const due =
+      c?.dueAt ??
+      c?.nextReviewAt ??
+      c?.nextReviewISO ??
+      c?.nextReviewDate ??
+      c?.nextReview; // garde-fou
+
+    if (!due) return false;
+
+    const ts = typeof due === "number" ? due : Date.parse(String(due));
+    return Number.isFinite(ts) && ts <= now;
+  }).length;
+}
+
 type DeckRow = {
   deck: Deck;
   stats: DeckReviewStats;
+  dueNow: number;
 };
 
 function fmtAttempt(stats: DeckReviewStats) {
@@ -78,16 +100,29 @@ export default function ReviewTab() {
       const reviews = await repo.listReviews();
       const allAttempts = await repo.listAllQuizAttempts();
 
+      const dueByDeckId = new Map<string, number>();
+
+      // calcule les due ids comme la session (source de vérité)
+      await Promise.all(
+        decks.map(async (d) => {
+          const dueIds = await repo.dueCardsForDeck(d);
+          dueByDeckId.set(d.id, dueIds.length);
+        })
+      );
+
       const nextRows: DeckRow[] = decks.map((d) => {
         const attempts = allAttempts.filter((a) => a.deckId === d.id);
         const stats = computeDeckStats({ deck: d, reviews, quizAttempts: attempts });
-        return { deck: d, stats };
+        const dueNow = dueByDeckId.get(d.id) ?? 0;
+        return { deck: d, stats, dueNow };
       });
 
-      nextRows.sort((a, b) => b.stats.dueCards - a.stats.dueCards);
+
+      // Tri cohérent: basé sur ce qu'on affiche
+      nextRows.sort((a, b) => b.dueNow - a.dueNow);
 
       setRows(nextRows);
-      setTotalDue(nextRows.reduce((acc, r) => acc + r.stats.dueCards, 0));
+      setTotalDue(nextRows.reduce((acc, r) => acc + r.dueNow, 0));
     })();
   }, [decks, refreshReviewStats]);
 
@@ -113,9 +148,7 @@ export default function ReviewTab() {
 
       {rows.length === 0 ? (
         <View style={[styles.emptyCard, { backgroundColor: t.card, borderColor: t.border }]}>
-          <Text style={{ color: t.muted, fontFamily: t.font.body }}>
-            Aucun deck. Va sur Accueil → Importer.
-          </Text>
+          <Text style={{ color: t.muted, fontFamily: t.font.body }}>Aucun deck. Va sur Accueil → Importer.</Text>
         </View>
       ) : null}
     </View>
@@ -123,11 +156,13 @@ export default function ReviewTab() {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <TopBar   title="Réviser"
-  showBack={false} // ✅
-  rightIcon="settings-outline"
-  onPressRight={() => router.push("/(tabs)/settings")}
-  variant="large"/>
+      <TopBar
+        title="Réviser"
+        showBack={false}
+        rightIcon="settings-outline"
+        onPressRight={() => router.push("/(tabs)/settings")}
+        variant="large"
+      />
 
       <FlatList
         data={rows}
@@ -138,6 +173,7 @@ export default function ReviewTab() {
         renderItem={({ item }) => {
           const d = item.deck;
           const s = item.stats;
+          const dueNow = item.dueNow;
 
           return (
             <View style={[styles.deckCard, { backgroundColor: t.card, borderColor: t.border }]}>
@@ -146,13 +182,11 @@ export default function ReviewTab() {
               </Text>
 
               <Text style={{ color: t.muted, marginTop: 6, fontFamily: t.font.body }}>
-                À réviser: <Text style={{ fontFamily: t.font.display, color: t.text }}>{s.dueCards}</Text> •
-                Apprises:{" "}
+                À réviser: <Text style={{ fontFamily: t.font.display, color: t.text }}>{dueNow}</Text> • Apprises:{" "}
                 <Text style={{ fontFamily: t.font.display, color: t.text }}>
                   {pct(s.learnedCards, s.totalCards)}%
                 </Text>{" "}
-                • QCM:{" "}
-                <Text style={{ fontFamily: t.font.display, color: t.text }}>{fmtAttempt(s)}</Text>
+                • QCM: <Text style={{ fontFamily: t.font.display, color: t.text }}>{fmtAttempt(s)}</Text>
               </Text>
 
               <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
@@ -160,16 +194,12 @@ export default function ReviewTab() {
                   <StitchButton
                     title="Réviser"
                     onPress={() => router.push(`/review/session?deckId=${d.id}`)}
-                    disabled={s.dueCards === 0}
+                    disabled={dueNow === 0}
                     variant="primary"
                   />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <StitchButton
-                    title="Stats"
-                    onPress={() => router.push(`/deck/${d.id}/stats`)}
-                    variant="secondary"
-                  />
+                  <StitchButton title="Stats" onPress={() => router.push(`/deck/${d.id}/stats`)} variant="secondary" />
                 </View>
               </View>
             </View>

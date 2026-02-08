@@ -1,7 +1,7 @@
+import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-
 import { LoadingBlock } from "../../src/components/LoadingBlock";
 import * as repo from "../../src/storage/repo";
 import { useAppStore } from "../../src/store/useAppStore";
@@ -33,7 +33,15 @@ export default function ReviewSession() {
     easy: 0,
     total: 0,
   });
+  const deckRef = useRef<Deck | null>(null);
+  const deckMapRef = useRef<Map<string, Deck>>(new Map());
+  const posRef = useRef(0);
+  const dueIdsRef = useRef<string[]>([]);
 
+  useEffect(() => { deckRef.current = deck; }, [deck]);
+  useEffect(() => { deckMapRef.current = deckMap; }, [deckMap]);
+  useEffect(() => { posRef.current = pos; }, [pos]);
+  useEffect(() => { dueIdsRef.current = dueIds; }, [dueIds]);
   const isMixedSession = deckId === "all";
 
   useEffect(() => {
@@ -76,6 +84,61 @@ export default function ReviewSession() {
     })();
   }, [deckId, isMixedSession]);
 
+   // Quand on revient du card-editor, on veut voir la modif immédiatement.
+   // Donc on recharge le(s) deck(s) au focus (sans toucher à dueIds/pos).
+   useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+  
+      (async () => {
+        try {
+          if (!deckId) return;
+  
+          // Carte courante
+          const currentCardId = dueIdsRef.current[posRef.current];
+          if (!currentCardId) return;
+  
+          // Deck à recharger (uniquement celui de la carte courante)
+          let targetDeckId: string | null = null;
+  
+          if (isMixedSession) {
+            for (const d of deckMapRef.current.values()) {
+              if (d.cards.some((c) => c.id === currentCardId)) {
+                targetDeckId = d.id;
+                break;
+              }
+            }
+          } else {
+            targetDeckId = deckRef.current?.id ?? deckId;
+          }
+  
+          if (!targetDeckId) return;
+  
+          const fresh = await repo.getDeck(targetDeckId);
+          if (!fresh || cancelled) return;
+  
+          if (isMixedSession) {
+            setDeckMap((prev) => {
+              const next = new Map(prev);
+              next.set(fresh.id, fresh);
+              return next;
+            });
+          } else {
+            setDeck(fresh);
+            setDeckMap(new Map([[fresh.id, fresh]]));
+          }
+        } catch {
+          // ignore
+        }
+      })();
+  
+      return () => {
+        cancelled = true;
+      };
+    }, [deckId, isMixedSession])
+  );
+  
+  
   const card = useMemo(() => {
     const cardId = dueIds[pos];
     if (!cardId) return null;
@@ -94,6 +157,20 @@ export default function ReviewSession() {
     }
   }, [deck, deckMap, dueIds, pos, isMixedSession]);
 
+
+  useEffect(() => {
+    const currentId = dueIds[pos];
+    if (!currentId) return;
+
+    // Si on a bien une carte, rien à faire
+    if (card) return;
+
+    // Sinon: on retire l'id manquant de la file, et on garde pos cohérent
+    setDueIds((prev) => prev.filter((id) => id !== currentId));
+    setPos((p) => Math.max(0, Math.min(p, Math.max(0, dueIds.length - 2))));
+    setShow(false);
+  }, [card, dueIds, pos]);
+  
   // Helper : trouve le deckId d'une carte
   const findDeckIdForCard = (cardId: string): string | null => {
     if (!isMixedSession && deck) return deck.id;

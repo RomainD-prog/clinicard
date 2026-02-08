@@ -364,7 +364,6 @@ export default function LibraryTab() {
             hitSlop={10}
           >
             <Ionicons name="folder-outline" size={18} color={t.text} />
-            <View style={[styles.iconBadge, { backgroundColor: t.primary }]} />
           </Pressable>
 
           <Pressable

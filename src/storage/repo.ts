@@ -192,6 +192,29 @@ export async function addDeckCard(
   return newCard;
 }
 
+export async function deleteDeckCard(deckId: string, cardId: string) {
+  const deck = await getDeck(deckId);
+  if (!deck) throw new Error("Deck introuvable");
+
+  const before = deck.cards.length;
+  deck.cards = deck.cards.filter((c) => c.id !== cardId);
+
+  if (deck.cards.length === before) {
+    // carte déjà absente => on ne fait rien
+    return;
+  }
+
+  // ✅ Nettoie aussi la review liée (sinon elle pollue les due/stats)
+  const all = await listReviews();
+  const next = all.filter((r) => !(r.deckId === deckId && r.cardId === cardId));
+  const key = await getUserKey(USER_DATA_KEYS.reviews);
+  await setJSON(key, next);
+
+  // ✅ Persist deck + autosync (saveDeck fait déjà triggerAutoSync)
+  await saveDeck(deck);
+}
+
+
 // ✅ Ancienne fonction pour la compatibilité (deprecated, utiliser getCurrentUserId)
 export async function getOrCreateUserId(): Promise<string> {
   return getCurrentUserId();

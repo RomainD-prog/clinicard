@@ -14,12 +14,30 @@ const CardOut = z.object({
   answer: z.string().min(1),
 });
 
-const McqOut = z.object({
-  question: z.string().min(3),
-  options: z.array(z.string().min(1)).min(3).max(6),
-  correctIndex: z.number().int().min(0).max(5),
-  explanation: z.string().min(1),
-});
+const McqOut = z
+  .object({
+    question: z.string().min(3),
+    options: z.array(z.string().min(1)).min(3).max(6),
+    correctIndices: z.array(z.number().int().min(0).max(5)).min(1).max(4),
+    explanation: z.string().min(1),
+  })
+  .superRefine((val, ctx) => {
+    // uniques
+    const uniq = new Set(val.correctIndices);
+    if (uniq.size !== val.correctIndices.length) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "correctIndices must be unique" });
+    }
+
+    // range cohérent avec options.length
+    const maxIdx = val.options.length - 1;
+    for (const i of val.correctIndices) {
+      if (i < 0 || i > maxIdx) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "correctIndices out of range" });
+        break;
+      }
+    }
+  });
+
 
 // IMPORTANT: plan7d non strict 7, on accepte 0..14
 const DeckOut = z.object({
@@ -171,7 +189,7 @@ Règles de contenu :
 - Niveau: ${level}.
 - Style: ${medicalStyle ? "médical (cours/concours)" : "général"}.
 - Flashcards: courtes, claires, haute précision, sans ambiguité.
-- QCM: 3..6 options, une seule bonne réponse, correctIndex cohérent, explication obligatoire.
+- QCM: 3..6 options, une ou plusieurs bonnes réponses (correctIndices = tableau d'indices), explication obligatoire.
 - plan7d = petites actions de révision (ex: “Revoir X”, “Faire 10 cartes sur Y”, “Refaire QCM sur Z”).
 - Le plan doit être réaliste, concret, actionnable.
 - Respect STRICT du schéma JSON demandé (Structured Outputs).
@@ -263,7 +281,7 @@ ${clipped}
 
       const userMoreMcq = `
 Génère ${need} QCM supplémentaires, SANS doublons.
-Rappel: 3..6 options, correctIndex cohérent, explanation obligatoire.
+Rappel: 3..6 options, correctIndices = tableau d'indices des bonnes réponses (peut contenir 1 ou plusieurs indices), explanation obligatoire.
 Ne crée pas de QCM hors-sujet. Si tu ne peux pas en produire ${need} de qualité, retourne moins.
 
 QCM déjà utilisés:
@@ -321,7 +339,7 @@ ${clipped}
     level,
     subject,
     cards: cards.slice(0, cardsTarget).map((c) => ({ id: nanoid(), ...c })),
-    mcqs: mcqs.slice(0, mcqTarget).map((q) => ({ id: nanoid(), ...q })),
+    mcqs: mcqs.slice(0, mcqTarget).map((q) => ({ id: nanoid(), ...q,correctIndex: Array.isArray(q.correctIndices) ? q.correctIndices[0] : 0})),
     plan7d: plan7d.slice(0, daysTarget),
   };
 
